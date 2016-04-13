@@ -1,9 +1,1 @@
-#LIBRARIES
-library(Rcpp)
-library(inline)
-library(seriation)
-library(dbscan)
-
-#START CODE
-x <- 1 #Test
-y <- 2
+#Removed all code from this script
