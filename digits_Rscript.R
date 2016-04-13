@@ -6,3 +6,4 @@ library(dbscan)
 
 #START CODE
 x <- 1 #Test
+y <- 2
