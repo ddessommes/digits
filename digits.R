@@ -1,4 +1,4 @@
-#Testing creating a blank R script from Github repo
+#A large part of this Code is taken from Michael Hahsler (michael.hahsler.net)
 
 #LIBRARIES
 library(dplyr)
@@ -6,6 +6,38 @@ library(Rcpp)
 library(inline)
 library(seriation)
 library(dbscan)
+
+#CREATE CLUSTERING ENTROPY AND PURITY FUNCTIONS 
+entropy <- function(cluster, truth) {
+  k <- max(cluster, truth)
+  cluster <- factor(cluster, levels = 1:k)
+  truth <- factor(truth, levels = 1:k)
+  m <- length(cluster)
+  mi <- table(cluster)
+  
+  cnts <- split(truth, cluster)
+  cnts <- sapply(cnts, FUN = function(n) table(n))
+  p <- sweep(cnts, 1, rowSums(cnts), "/")
+  p[is.nan(p)] <- 0
+  e <- -p * log(p, 2)
+  sum(rowSums(e, na.rm = TRUE) * mi/m)
+}
+
+purity <- function(cluster, truth) {
+  k <- max(cluster, truth)
+  cluster <- factor(cluster, levels = 1:k)
+  truth <- factor(truth, levels = 1:k)
+  m <- length(cluster)
+  mi <- table(cluster)
+  
+  cnts <- split(truth, cluster)
+  cnts <- sapply(cnts, FUN = function(n) table(n))
+  p <- sweep(cnts, 1, rowSums(cnts), "/")
+  p[is.nan(p)] <- 0
+  
+  sum(apply(p, 1, max) * mi/m)
+}
+
 
 #LOAD/SAVE DATA
 #numbers <- read.csv("numbers.csv", header=TRUE)
@@ -106,5 +138,24 @@ pimage(c3<0)
 
 #CLUSTERING A SAMPLE
 s <- numbers[sample(1:nrow(numbers), 1000),]
-km <- kmeans(s, c=20, nstart=5)
-#km
+kms <- kmeans(s, c=20, nstart=5)
+#kms
+kms$size
+kms$withinss
+
+#View Cluster Sample Images (i.e. Cluster1)
+s1 <- s[kms$cluster==1,]
+pimage(toMatrix(s1[1,]))
+pimage(toMatrix(s1[2,]))
+
+#View the Centroid Images
+pimage(toMatrix(kms$centers[1,]))
+pimage(toMatrix(kms$centers[2,]))
+
+#View the similarity of Cluster Centroids
+plot(hclust(dist(kms$centers)))              #Euclidean Distance
+plot(hclust(as.dist(1-cor(t(kms$centers))))) #Pearson Correlation
+plot(hclust(as.dist(
+  abs(outer(rowSums(km$centers), rowSums(kms$centers), FUN = "-"))
+)))
+#As the amount of ink on image
