@@ -7,6 +7,49 @@ library(inline)
 library(seriation)
 library(dbscan)
 
+#DATA OPERATIONS dplyr
+#Reference
+#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr 
+
+gnumbers <- numbers %>% tbl_df
+gnumbers %>% glimpse
+
+gnumbers <- gnumbers %>% mutate(pixelSUM_ALL = rowSums(gnumbers))
+#NOTE: If pixel columns have been rearranged prior to doing this IT may NOT work!
+gnumbers$pixelSUM_H1 <- select(gnumbers, pixel0:pixel391) %>% rowSums
+gnumbers$pixelSUM_H2 <- select(gnumbers, pixel392:pixel783) %>% rowSums
+gnumbers$pixelSUM_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowSums
+gnumbers$pixelSUM_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowSums
+gnumbers$pixelSUM_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowSums
+gnumbers$pixelSUM_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowSums
+#Get Ratios
+gnumbers <- gnumbers %>% mutate(pixelPCT_H1 = (pixelSUM_H1/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_H2 = (pixelSUM_H2/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q1 = (pixelSUM_Q1/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q2 = (pixelSUM_Q2/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q3 = (pixelSUM_Q3/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q4 = (pixelSUM_Q4/pixelSUM_ALL))
+#Get Averages
+gnumbers <- gnumbers %>% mutate(pixelAVG_ALL = rowMeans(gnumbers))
+gnumbers$pixelAVG_H1 <- select(gnumbers, pixel0:pixel391) %>% rowMeans
+gnumbers$pixelAVG_H2 <- select(gnumbers, pixel392:pixel783) %>% rowMeans
+gnumbers$pixelAVG_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowMeans
+gnumbers$pixelAVG_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowMeans
+gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
+gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
+gnumbers %>% glimpse
+
+
+#LOAD/SAVE DATA
+#numbers <- read.csv("numbers.csv", header=TRUE)
+#num_labels <- read.csv("numbers_labels.csv", header=TRUE)
+#save(numbers, file="numbers.rda")
+#save(num_labels, file="num_labels.rda")
+#load("numbers.rda")
+#load("num_labels.rda")
+write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
+
+
 #CREATE CLUSTERING ENTROPY AND PURITY FUNCTIONS 
 entropy <- function(cluster, truth) {
   k <- max(cluster, truth)
@@ -37,15 +80,6 @@ purity <- function(cluster, truth) {
   
   sum(apply(p, 1, max) * mi/m)
 }
-
-
-#LOAD/SAVE DATA
-#numbers <- read.csv("numbers.csv", header=TRUE)
-#num_labels <- read.csv("numbers_labels.csv", header=TRUE)
-#save(numbers, file="numbers.rda")
-#save(num_labels, file="num_labels.rda")
-#load("numbers.rda")
-#load("num_labels.rda")
 
 #CREATE HELPER FUNCTIONS
 toMatrix <- function(x) matrix(as.numeric(x), nrow=28, byrow=TRUE)
@@ -144,9 +178,9 @@ kms$size
 kms$withinss
 
 #View Cluster Sample Images (i.e. Cluster1)
-s1 <- s[kms$cluster==1,]
-pimage(toMatrix(s1[1,]))
-pimage(toMatrix(s1[2,]))
+s3 <- s[kms$cluster==3,]
+pimage(toMatrix(s3[10,]))
+pimage(toMatrix(s3[20,]))
 
 #View the Centroid Images
 pimage(toMatrix(kms$centers[1,]))
@@ -156,6 +190,6 @@ pimage(toMatrix(kms$centers[2,]))
 plot(hclust(dist(kms$centers)))              #Euclidean Distance
 plot(hclust(as.dist(1-cor(t(kms$centers))))) #Pearson Correlation
 plot(hclust(as.dist(
-  abs(outer(rowSums(km$centers), rowSums(kms$centers), FUN = "-"))
+  abs(outer(rowSums(kms$centers), rowSums(kms$centers), FUN = "-"))
 )))
 #As the amount of ink on image
