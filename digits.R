@@ -9,7 +9,7 @@ library(dbscan)
 
 #DATA OPERATIONS dplyr
 #Reference
-#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr 
+#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
 
 gnumbers <- numbers %>% tbl_df
 gnumbers %>% glimpse
@@ -169,6 +169,18 @@ edge <- rbind(
 c3 <- convolve_2d(x_bb40, edge)
 pimage(c3)
 pimage(c3<0)
+
+
+#CONFIRM CLUSTERING TENDENCY
+#Distance Matrix
+gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
+#gfeatures %>% select(pixelSUM_H1,pixelSUM_H2) %>% scale
+sg <- gfeatures[sample(1:nrow(gfeatures), 1000),]
+plot(sg$pixelSUM_ALL)
+sgs <- scale(sg)
+dist_sgs <- dist(sgs)
+VAT(dist_sgs)
+iVAT(dist_sgs)
 
 #CLUSTERING A SAMPLE
 s <- numbers[sample(1:nrow(numbers), 1000),]
