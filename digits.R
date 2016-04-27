@@ -189,10 +189,8 @@ xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines
 xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines
 xhq <- (xh>quantile(xh, .97)) # use (1-x)% of the highest values
 xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values
-hq <-sum(toVector(xhq))
-vq <-sum(toVector(xvq))
-obj[i,1] <- hq
-obj[i,2] <- vq
+obj[i,1] <- sum(toVector(xhq))
+obj[i,2] <- sum(toVector(xvq))
 }
 
 #pimage(x)
