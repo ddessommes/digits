@@ -7,6 +7,18 @@ library(inline)
 library(seriation)
 library(dbscan)
 
+#LOAD/SAVE DATA
+#numbers <- read.csv("numbers.csv", header=TRUE)
+#num_labels <- read.csv("numbers_labels.csv", header=TRUE)
+#save(numbers, file="numbers.rda")
+#save(num_labels, file="num_labels.rda")
+#save(gnumbers, file="gnumbers.rda")
+#save(gfeatures, file="gfeatures.rda")
+load("numbers.rda")
+#write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
+#write.csv(gfeatures, file = "gnumbers.csv", row.names = FALSE)
+
+
 #DATA OPERATIONS dplyr
 #Reference
 #http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
@@ -39,16 +51,7 @@ gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
 gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
 gnumbers %>% glimpse
 
-
-#LOAD/SAVE DATA
-#numbers <- read.csv("numbers.csv", header=TRUE)
-#num_labels <- read.csv("numbers_labels.csv", header=TRUE)
-#save(numbers, file="numbers.rda")
-#save(num_labels, file="num_labels.rda")
-#load("numbers.rda")
-#load("num_labels.rda")
-write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
-
+gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
 
 #CREATE CLUSTERING ENTROPY AND PURITY FUNCTIONS 
 entropy <- function(cluster, truth) {
@@ -120,17 +123,18 @@ blurr <- rbind(
   c(0.0, 0.5, 0.0)
 )
 blurr <- blurr/sum(blurr) #normalize to sum to 1
-pimage(blurr)
+#pimage(blurr)
 
 #Sample operations to visualize a number
-x <- toMatrix(numbers[4,])
-pimage(x)
-x_blur <- convolve_2d(x, blurr)
-pimage(x_blur)
-x_bblur <- convolve_2d(x_blur, blurr) # blurr some more
-pimage(x_bblur)
-x_bb40 <- x_bblur>=quantile(x_bblur[x_bblur>0], 1-.4) #Keep only 40% darkest
-pimage(x_bb40)
+#x1 <- toMatrix(numbers[420,])
+#pimage(x1)
+#x1_blur <- convolve_2d(x1, blurr)
+#pimage(x1_blur)
+#x1_bblur <- convolve_2d(x1_blur, blurr) # blurr some more
+#pimage(x1_bblur)
+#x1_bb40 <- x1_bblur>=quantile(x1_bblur[x1_bblur>0], 1-.4) #Keep only 40% darkest
+#pimage(x1_bb40)
+
 
 #PATTERN EXTRACTION
 #Example of vertical pattern with 2 dark pixels - i.e. NUMBER ONE
@@ -171,9 +175,39 @@ pimage(c3)
 pimage(c3<0)
 
 
+#CONVOLVE THE DATA SET
+l <- 0
+for(i in 1:5) 
+{
+  l <- l+i
+  }
+l
+
+Zoo2 <- Zoo
+for(i in 1:ncol(Zoo2)) Zoo2[[i]] <- as.factor(Zoo2[[i]])
+sapply(Zoo2, class)
+
+
+x <- toMatrix(numbers[3,])
+x_25 <- x>=quantile(x[x>0], 1-.25) #Keep only 25% darkest
+
+xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines
+xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines
+
+xhq <- (xh>quantile(xh, .97)) # use (1-x)% of the highest values
+xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values
+
+(hq <-sum(toVector(xhq)))
+(vq <-sum(toVector(xvq)))
+
+pimage(x)
+pimage(x_25)
+pimage(xhq) 
+pimage(xvq) 
+
+
 #CONFIRM CLUSTERING TENDENCY
 #Distance Matrix
-gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
 #gfeatures %>% select(pixelSUM_H1,pixelSUM_H2) %>% scale
 sg <- gfeatures[sample(1:nrow(gfeatures), 1000),]
 plot(sg$pixelSUM_ALL)
@@ -199,8 +233,10 @@ pimage(toMatrix(kms$centers[1,]))
 pimage(toMatrix(kms$centers[2,]))
 
 #View the similarity of Cluster Centroids
-plot(hclust(dist(kms$centers)))              #Euclidean Distance
-plot(hclust(as.dist(1-cor(t(kms$centers))))) #Pearson Correlation
+plot(hclust(dist(kms$centers)))              
+#Euclidean Distance
+plot(hclust(as.dist(1-cor(t(kms$centers))))) 
+#Pearson Correlation
 plot(hclust(as.dist(
   abs(outer(rowSums(kms$centers), rowSums(kms$centers), FUN = "-"))
 )))
