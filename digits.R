@@ -19,40 +19,6 @@ load("numbers.rda")
 #write.csv(gfeatures, file = "gnumbers.csv", row.names = FALSE)
 
 
-#DATA OPERATIONS dplyr
-#Reference
-#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
-
-gnumbers <- numbers %>% tbl_df
-gnumbers %>% glimpse
-
-gnumbers <- gnumbers %>% mutate(pixelSUM_ALL = rowSums(gnumbers))
-#NOTE: If pixel columns have been rearranged prior to doing this IT may NOT work!
-gnumbers$pixelSUM_H1 <- select(gnumbers, pixel0:pixel391) %>% rowSums
-gnumbers$pixelSUM_H2 <- select(gnumbers, pixel392:pixel783) %>% rowSums
-gnumbers$pixelSUM_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowSums
-gnumbers$pixelSUM_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowSums
-gnumbers$pixelSUM_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowSums
-gnumbers$pixelSUM_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowSums
-#Get Ratios
-gnumbers <- gnumbers %>% mutate(pixelPCT_H1 = (pixelSUM_H1/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_H2 = (pixelSUM_H2/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q1 = (pixelSUM_Q1/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q2 = (pixelSUM_Q2/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q3 = (pixelSUM_Q3/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q4 = (pixelSUM_Q4/pixelSUM_ALL))
-#Get Averages
-gnumbers <- gnumbers %>% mutate(pixelAVG_ALL = rowMeans(gnumbers))
-gnumbers$pixelAVG_H1 <- select(gnumbers, pixel0:pixel391) %>% rowMeans
-gnumbers$pixelAVG_H2 <- select(gnumbers, pixel392:pixel783) %>% rowMeans
-gnumbers$pixelAVG_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowMeans
-gnumbers$pixelAVG_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowMeans
-gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
-gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
-gnumbers %>% glimpse
-
-gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
-
 #CREATE CLUSTERING ENTROPY AND PURITY FUNCTIONS 
 entropy <- function(cluster, truth) {
   k <- max(cluster, truth)
@@ -89,10 +55,7 @@ toMatrix <- function(x) matrix(as.numeric(x), nrow=28, byrow=TRUE)
 toVector <- function(x) as.vector(t(x))
 
 #Validate Functions
-all(toVector(toMatrix(numbers[2,])) == numbers[2,])
-
-#VISUALIZE SAMPLE DATA
-pimage(toMatrix(numbers[2,]))
+#all(toVector(toMatrix(numbers[2,])) == numbers[2,])
 
 #CREATE C++ 2D Convolution FUNCTION
 convolve_2d <- cxxfunction(signature(sampleS = "numeric",
@@ -114,6 +77,45 @@ convolve_2d <- cxxfunction(signature(sampleS = "numeric",
                            }
                            return output;
                            ')
+
+
+#DATA OPERATIONS dplyr
+#Reference
+#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
+
+gnumbers <- numbers %>% tbl_df
+gnumbers %>% glimpse
+
+gnumbers <- gnumbers %>% mutate(pixelSUM_ALL = rowSums(gnumbers))
+#NOTE: If pixel columns have been rearranged prior to doing this IT may NOT work!
+gnumbers$pixelSUM_H1 <- select(gnumbers, pixel0:pixel391) %>% rowSums
+gnumbers$pixelSUM_H2 <- select(gnumbers, pixel392:pixel783) %>% rowSums
+gnumbers$pixelSUM_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowSums
+gnumbers$pixelSUM_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowSums
+gnumbers$pixelSUM_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowSums
+gnumbers$pixelSUM_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowSums
+#Get Ratios
+gnumbers <- gnumbers %>% mutate(pixelPCT_H1 = (pixelSUM_H1/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_H2 = (pixelSUM_H2/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q1 = (pixelSUM_Q1/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q2 = (pixelSUM_Q2/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q3 = (pixelSUM_Q3/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q4 = (pixelSUM_Q4/pixelSUM_ALL))
+#Get Averages
+gnumbers <- gnumbers %>% mutate(pixelAVG_ALL = rowMeans(gnumbers))
+gnumbers$pixelAVG_H1 <- select(gnumbers, pixel0:pixel391) %>% rowMeans
+gnumbers$pixelAVG_H2 <- select(gnumbers, pixel392:pixel783) %>% rowMeans
+gnumbers$pixelAVG_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowMeans
+gnumbers$pixelAVG_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowMeans
+gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
+gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
+gnumbers %>% glimpse
+
+gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
+
+
+#VISUALIZE SAMPLE DATA
+pimage(toMatrix(numbers[2,]))
 
 
 #IMAGE BLURR with a Gaussian Kernel
@@ -154,56 +156,49 @@ conv_hc <- t(conv_vc)
 pimage(conv_hc)
 
 #Start with a B/W image (i.e. the 40% darkest)
-c1 <- convolve_2d(x_bb40, conv_vc) #this attempts to find vertical lines
-pimage(c1)
-pimage(c1>quantile(c1, .95)) # use 5% of the highest values
+#c1 <- convolve_2d(x_bb40, conv_vc) #this attempts to find vertical lines
+#pimage(c1)
+#pimage(c1>quantile(c1, .95)) # use 5% of the highest values
 
-c2 <- convolve_2d(x_bb40, conv_hc) #this attempts to find horizontal lines
-pimage(c2)
-pimage(c2>quantile(c1, .95)) # use 5% of the highest values
+#c2 <- convolve_2d(x_bb40, conv_hc) #this attempts to find horizontal lines
+#pimage(c2)
+#pimage(c2>quantile(c1, .95)) # use 5% of the highest values
 
 
 #IMAGE EDGE DETECT with a Gaussian Kernel
-edge <- rbind(
-  c(0.0,-2.0, 0.0),
- c(-2.0, 8.0,-2.0),
-  c(0.0,-2.0, 0.0)
-)
-
-c3 <- convolve_2d(x_bb40, edge)
-pimage(c3)
-pimage(c3<0)
+#edge <- rbind(
+#  c(0.0,-2.0, 0.0),
+# c(-2.0, 8.0,-2.0),
+#  c(0.0,-2.0, 0.0)
+#)
+#
+#c3 <- convolve_2d(x_bb40, edge)
+#pimage(c3)
+#pimage(c3<0)
 
 
 #CONVOLVE THE DATA SET
-l <- 0
-for(i in 1:5) 
-{
-  l <- l+i
-  }
-l
-
-Zoo2 <- Zoo
-for(i in 1:ncol(Zoo2)) Zoo2[[i]] <- as.factor(Zoo2[[i]])
-sapply(Zoo2, class)
-
-
-x <- toMatrix(numbers[3,])
+#Initialize Variables
+x <- 0
+obj = matrix(nrow = 42000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
+#Execute For Loop
+for(i in 1:42000){
+x <- toMatrix(numbers[i,])
 x_25 <- x>=quantile(x[x>0], 1-.25) #Keep only 25% darkest
-
 xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines
 xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines
-
 xhq <- (xh>quantile(xh, .97)) # use (1-x)% of the highest values
 xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values
+hq <-sum(toVector(xhq))
+vq <-sum(toVector(xvq))
+obj[i,1] <- hq
+obj[i,2] <- vq
+}
 
-(hq <-sum(toVector(xhq)))
-(vq <-sum(toVector(xvq)))
-
-pimage(x)
-pimage(x_25)
-pimage(xhq) 
-pimage(xvq) 
+#pimage(x)
+#pimage(x_25)
+#pimage(xhq) 
+#pimage(xvq) 
 
 
 #CONFIRM CLUSTERING TENDENCY
