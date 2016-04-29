@@ -19,6 +19,7 @@
 #' * data was extracted from http://yann.lecun.com/exdb/mnist/
 
 library(seriation) # used for `pimage()`
+set.seed(1234)
 
 numbers <- read.csv("numbers.csv", header=TRUE)
 dim(numbers)
@@ -137,6 +138,19 @@ mc3 <- convolve_2d(mbb2, conv3)
 pimage(mc3)
 pimage(mc3<0)
 
+#' ## End point detection
+#'
+#' We use thinning and then the edge detection kernel.
+#' _Note:_ There are better ways to do this!
+source("thinning.R")
+pimage(m>100)
+m_thin <- thinImage(m>100)
+pimage(m_thin)
+
+mc4 <- convolve_2d(m_thin, conv3)
+pimage(mc4)
+pimage(mc4>4)
+sum(mc4>4)
 
 #' # Clustering
 #' _Simple approach:_ Take a small sample and
@@ -187,3 +201,46 @@ plot(hclust(as.dist(1-cor(t(km$centers)))))
 plot(hclust(as.dist(
   abs(outer(rowSums(km$centers), rowSums(km$centers), FUN = "-"))
   )))
+
+#' # Feature Reduction with PCA
+pc <- prcomp(s)
+
+# How important are the first principal components?
+plot(pc)
+
+str(pc)
+#' `$x` contains the data projected on the PCs. Let's look at the
+#' first two PCs.
+
+plot(pc$x[,1:2])
+
+#' show the row number in s for the image
+plot(pc$x[,1:2], col = 0)
+text(pc$x[,1], pc$x[,2], 1:nrow(s), cex = .6)
+
+#' look at some images to the far left
+pimage(toMatrix(s[986,]))
+pimage(toMatrix(s[432,]))
+pimage(toMatrix(s[110,]))
+pimage(toMatrix(s[315,]))
+
+#' cluster the images using only the first 10 PCs
+data_subspace <- pc$x[,1:10]
+k <- 12
+km <- kmeans(data_subspace, centers = k)
+plot(data_subspace, col = km$cluster)
+
+#' show average image for all clusters
+for(i in 1:k)
+pimage(toMatrix(colMeans(s[km$cluster == i,])))
+
+#' # 25 Best and Worst Written Digits using LOF
+library(dbscan)
+
+l <- lof(s)
+
+# ' Best handwriting
+for(i in order(l)[1:25]) pimage(toMatrix(s[i,]))
+
+#' Worst handwriting
+for(i in order(l, decreasing = TRUE)[1:25]) pimage(toMatrix(s[i,]))
