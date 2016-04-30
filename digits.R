@@ -1,6 +1,7 @@
 #A large part of this Code is taken from Michael Hahsler (michael.hahsler.net)
 
 #LIBRARIES
+library(plyr)
 library(dplyr)
 library(Rcpp)
 library(inline)
