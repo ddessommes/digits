@@ -6,6 +6,13 @@ library(Rcpp)
 library(inline)
 library(seriation)
 library(dbscan)
+library(IM)
+library(imager)
+library(adimpro)
+library(ripa)
+library(smoothie)
+library(spatialfil)
+
 
 #LOAD/SAVE DATA
 #numbers <- read.csv("numbers.csv", header=TRUE)
