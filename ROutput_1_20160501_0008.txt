@@ -1,0 +1,143 @@
+> str(kms10)
+List of 9
+ $ cluster     : int [1:5000] 8 9 3 8 4 4 1 10 10 2 ...
+ $ centers     : num [1:10, 1:20] -0.778 -0.132 -1.351 -0.527 0.68 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:10] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:20] "pixelSUM_ALL" "pixelSUM_H1" "pixelSUM_H2" "pixelSUM_Q1" ...
+ $ totss       : num 99573
+ $ withinss    : num [1:10] 1589 3827 2021 2585 2213 ...
+ $ tot.withinss: num 25230
+ $ betweenss   : num 74343
+ $ size        : int [1:10] 475 783 655 651 405 405 219 592 357 458
+ $ iter        : int 4
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms12)
+List of 9
+ $ cluster     : int [1:5000] 12 4 8 12 3 10 8 7 2 7 ...
+ $ centers     : num [1:12, 1:20] -1.415 1.312 -0.49 -0.671 0.442 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:12] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:20] "pixelSUM_ALL" "pixelSUM_H1" "pixelSUM_H2" "pixelSUM_Q1" ...
+ $ totss       : num 1e+05
+ $ withinss    : num [1:12] 1571 2239 1696 2219 2247 ...
+ $ tot.withinss: num 23079
+ $ betweenss   : num 77292
+ $ size        : int [1:12] 598 449 398 547 474 511 504 313 308 146 ...
+ $ iter        : int 10
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms14)
+List of 9
+ $ cluster     : int [1:5000] 10 13 2 4 2 13 13 10 4 13 ...
+ $ centers     : num [1:14, 1:20] 0.955 1.121 -0.709 -0.75 0.781 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:14] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:20] "pixelSUM_ALL" "pixelSUM_H1" "pixelSUM_H2" "pixelSUM_Q1" ...
+ $ totss       : num 99362
+ $ withinss    : num [1:14] 1891 1939 1315 1508 1871 ...
+ $ tot.withinss: num 21652
+ $ betweenss   : num 77709
+ $ size        : int [1:14] 312 269 445 472 436 386 179 249 291 310 ...
+ $ iter        : int 7
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms16)
+List of 9
+ $ cluster     : int [1:5000] 2 8 12 8 8 14 6 2 14 3 ...
+ $ centers     : num [1:16, 1:20] 0.0225 0.0484 0.4218 1.5358 -0.8003 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:16] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:20] "pixelSUM_ALL" "pixelSUM_H1" "pixelSUM_H2" "pixelSUM_Q1" ...
+ $ totss       : num 1e+05
+ $ withinss    : num [1:16] 1098 1009 1713 1172 1215 ...
+ $ tot.withinss: num 19738
+ $ betweenss   : num 80523
+ $ size        : int [1:16] 332 215 428 165 430 347 470 431 187 241 ...
+ $ iter        : int 7
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms18)
+List of 9
+ $ cluster     : int [1:5000] 1 3 6 18 2 18 1 9 3 14 ...
+ $ centers     : num [1:18, 1:20] -0.758 1.603 1.157 -0.791 -1.579 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:18] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:20] "pixelSUM_ALL" "pixelSUM_H1" "pixelSUM_H2" "pixelSUM_Q1" ...
+ $ totss       : num 99398
+ $ withinss    : num [1:18] 932 817 1191 1152 801 ...
+ $ tot.withinss: num 18435
+ $ betweenss   : num 80963
+ $ size        : int [1:18] 406 118 292 400 416 412 264 284 191 241 ...
+ $ iter        : int 6
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms20)
+List of 9
+ $ cluster     : int [1:5000] 10 15 17 13 19 10 11 14 19 13 ...
+ $ centers     : num [1:20, 1:20] 0.896 0.256 1.573 2.547 -0.864 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:20] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:20] "pixelSUM_ALL" "pixelSUM_H1" "pixelSUM_H2" "pixelSUM_Q1" ...
+ $ totss       : num 97783
+ $ withinss    : num [1:20] 618 932 1041 845 652 ...
+ $ tot.withinss: num 16751
+ $ betweenss   : num 81032
+ $ size        : int [1:20] 143 336 230 112 348 355 174 118 312 398 ...
+ $ iter        : int 9
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> 
+> kms10$size
+ [1] 475 783 655 651 405 405 219 592 357 458
+> kms12$size
+ [1] 598 449 398 547 474 511 504 313 308 146 292 460
+> kms14$size
+ [1] 312 269 445 472 436 386 179 249 291 310 469 234 517 431
+> kms16$size
+ [1] 332 215 428 165 430 347 470 431 187 241 252 477 135 422 215 253
+> kms18$size
+ [1] 406 118 292 400 416 412 264 284 191 241 172 300 115 205 287 205 278 414
+> kms20$size
+ [1] 143 336 230 112 348 355 174 118 312 398 349 214 260 265 238 163 205 268 299 213
+> 
+> 100*(kms10$betweenss / kms10$totss)
+[1] 74.66171
+> 100*(kms12$betweenss / kms12$totss)
+[1] 77.0065
+> 100*(kms14$betweenss / kms14$totss)
+[1] 78.20847
+> 100*(kms16$betweenss / kms16$totss)
+[1] 80.3131
+> 100*(kms18$betweenss / kms18$totss)
+[1] 81.45308
+> 100*(kms20$betweenss / kms20$totss)
+[1] 82.86938
+> 
+> 100*(kms10$tot.withinss / kms10$totss)
+[1] 25.33829
+> 100*(kms12$tot.withinss / kms12$totss)
+[1] 22.9935
+> 100*(kms14$tot.withinss / kms14$totss)
+[1] 21.79153
+> 100*(kms16$tot.withinss / kms16$totss)
+[1] 19.6869
+> 100*(kms18$tot.withinss / kms18$totss)
+[1] 18.54692
+> 100*(kms20$tot.withinss / kms20$totss)
+[1] 17.13062
+> 
+> plot(hclust(dist(kms10$centers)))
+> plot(hclust(dist(kms12$centers)))
+> plot(hclust(dist(kms14$centers)))
+> plot(hclust(dist(kms16$centers)))
+> plot(hclust(dist(kms18$centers)))
+> plot(hclust(dist(kms20$centers)))
+> 
+> plot(hclust(as.dist(1-cor(t(kms10$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms12$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms14$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms16$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms18$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms20$centers)))))

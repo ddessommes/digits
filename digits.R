@@ -8,11 +8,13 @@ library(inline)
 library(seriation)
 library(dbscan)
 library(IM)
-library(imager)
-library(adimpro)
-library(ripa)
-library(smoothie)
 library(spatialfil)
+#library(EBImage)
+#library(imager)
+#library(adimpro)
+#library(ripa)
+#library(smoothie)
+
 
 
 #LOAD/SAVE DATA
@@ -163,6 +165,7 @@ pimage(conv_vc)
 conv_hc <- t(conv_vc)
 pimage(conv_hc)
 
+
 #Start with a B/W image (i.e. the 40% darkest)
 #c1 <- convolve_2d(x_bb40, conv_vc) #this attempts to find vertical lines
 #pimage(c1)
@@ -184,8 +187,19 @@ pimage(conv_hc)
 #pimage(c3)
 #pimage(c3<0)
 
+#spatialfil() easily generates different Gaussian kernel types
+cG <- convKernel(sigma = 1.5, k = "gaussian")   #Gaussian Filter
+G <- cG$matrix
+cS <- convKernel(sigma = 1.5, k = "sobel")      #Sobel Filter
+S <- cS$matrix
+cL <- convKernel(sigma = 1.5, k = "laplacian")  #Laplacian Filter
+L <- cL$matrix
+cK <- convKernel(sigma = 1.5, k = "LoG")        #Laplacian of Gaussian Filter
+K <- cK$matrix
+pimage(G)
 
-#CONVOLVE THE DATA SET
+
+#CONVOLVE THE DATA SET FOR HORIZONTAL AND VERTICAL LINE PATTERNS
 #Initialize Variables
 x <- 0
 obj = matrix(nrow = 42000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
@@ -200,45 +214,142 @@ xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values
 obj[i,1] <- sum(toVector(xhq))
 obj[i,2] <- sum(toVector(xvq))
 }
-
+colnames(obj) <- c("pixelSUM_Horiz","pixelSUM_Vert")
 #pimage(x)
 #pimage(x_25)
 #pimage(xhq) 
 #pimage(xvq) 
 
 
+#CONVOLVE THE DATA SET FOR SOBEL FILTER from spatialfil() AND CENTROID (x,y)
+#Initialize Variables
+z <- 0
+obj2 = matrix(nrow = 42000, ncol = 3, byrow = TRUE) #create empty matrix to dump results into
+#Execute For Loop
+for(i in 1:42000){
+  z <- toMatrix(numbers[i,])
+  #z_25 <- z>=quantile(z[z>0], 1-.25) #Keep only 25% darkest
+  zS <- convolve_2d(z, S) #this attempts to convolve with Sobel
+  zSq <- (zS>quantile(zS, .97)) # use (1-x)% of the highest values
+  cI <- calcCentroid(z)
+  obj2[i,1] <- sum(toVector(zSq))
+  obj2[i,2] <- cI[1]
+  obj2[i,3] <- cI[2]
+}
+colnames(obj2) <- c("pixelSUM_Sobel","pixelAVG_CentX", "pixelAVG_CentY")
+#pimage(z)
+#pimage(z_25)
+#pimage(zG) 
+#pimage(zGq)
+
+mutate(gfeatures, 
+       pixelSUM_Horiz = obj[,"pixelSUM_Horiz"],
+       pixelSUM_Vert = obj[,"pixelSUM_Vert"],
+       pixelSUM_Sobel = obj2[,"pixelSUM_Sobel"],
+       pixelAVG_CentX = obj2[,"pixelAVG_CentX"],
+       pixelAVG_CentY = obj2[,"pixelAVG_CentY"])
+
+scaled_features <- scale(gfeatures)
+#scaled_features <- gfeatures %>% scale
+
+#END POINT DETECTION
+
+source("thinning.R")
+pimage(m>100)
+m_thin <- thinImage(m>100)
+pimage(m_thin)
+mc4 <- convolve_2d(m_thin, edge)
+pimage(mc4)
+pimage(mc4>4)
+sum(mc4>4)
+
 #CONFIRM CLUSTERING TENDENCY
 #Distance Matrix
-#gfeatures %>% select(pixelSUM_H1,pixelSUM_H2) %>% scale
-sg <- gfeatures[sample(1:nrow(gfeatures), 1000),]
-plot(sg$pixelSUM_ALL)
-sgs <- scale(sg)
-dist_sgs <- dist(sgs)
-VAT(dist_sgs)
-iVAT(dist_sgs)
+sample_scaled <- scaled_features[sample(1:nrow(scaled_features), 1000),]
+sample_scaled <- as.data.frame(sample_scaled)
+plot(sample_scaled$pixelSUM_ALL)
+dist_sample_scl <- dist(sample_scaled)
+#VAT(dist_sample_scl)
+iVAT(dist_sample_scl)
 
-#CLUSTERING A SAMPLE
-s <- numbers[sample(1:nrow(numbers), 1000),]
-kms <- kmeans(s, c=20, nstart=5)
-#kms
-kms$size
-kms$withinss
+#CLUSTERING WITH SAMPLES OF 5000 AND CHANGING # OF CENTERS FROM 10 TO 20 BY 2
+s10 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms10 <- kmeans(s10, centers = 10, nstart = 5)
+
+s12 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms12 <- kmeans(s12, centers = 12, nstart = 5)
+
+s14 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms14 <- kmeans(s14, centers = 14, nstart = 5)
+
+s16 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms16 <- kmeans(s16, centers = 16, nstart = 5)
+
+s18 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms18 <- kmeans(s18, centers = 18, nstart = 5)
+
+s20 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms20 <- kmeans(s20, centers = 20, nstart = 5)
+
+
+str(kms10)
+str(kms12)
+str(kms14)
+str(kms16)
+str(kms18)
+str(kms20)
+
+kms10$size
+kms12$size
+kms14$size
+kms16$size
+kms18$size
+kms20$size
+
+100*(kms10$betweenss / kms10$totss)
+100*(kms12$betweenss / kms12$totss)
+100*(kms14$betweenss / kms14$totss)
+100*(kms16$betweenss / kms16$totss)
+100*(kms18$betweenss / kms18$totss)
+100*(kms20$betweenss / kms20$totss)
+
+100*(kms10$tot.withinss / kms10$totss)
+100*(kms12$tot.withinss / kms12$totss)
+100*(kms14$tot.withinss / kms14$totss)
+100*(kms16$tot.withinss / kms16$totss)
+100*(kms18$tot.withinss / kms18$totss)
+100*(kms20$tot.withinss / kms20$totss)
+
+plot(hclust(dist(kms10$centers)))
+plot(hclust(dist(kms12$centers)))
+plot(hclust(dist(kms14$centers)))
+plot(hclust(dist(kms16$centers)))
+plot(hclust(dist(kms18$centers)))
+plot(hclust(dist(kms20$centers)))
+
+plot(hclust(as.dist(1-cor(t(kms10$centers)))))
+plot(hclust(as.dist(1-cor(t(kms12$centers)))))
+plot(hclust(as.dist(1-cor(t(kms14$centers)))))
+plot(hclust(as.dist(1-cor(t(kms16$centers)))))
+plot(hclust(as.dist(1-cor(t(kms18$centers)))))
+plot(hclust(as.dist(1-cor(t(kms20$centers)))))
+
+#CLUSTERING ON THE RAW DATA
+#View the Centroid Images
+#pimage(toMatrix(kms$centers[1,]))
+#pimage(toMatrix(kms$centers[2,]))
 
 #View Cluster Sample Images (i.e. Cluster1)
-s3 <- s[kms$cluster==3,]
-pimage(toMatrix(s3[10,]))
-pimage(toMatrix(s3[20,]))
-
-#View the Centroid Images
-pimage(toMatrix(kms$centers[1,]))
-pimage(toMatrix(kms$centers[2,]))
+#s3 <- s[kms1$cluster==3,]
+#pimage(toMatrix(s3[10,]))
+#pimage(toMatrix(s3[20,]))
 
 #View the similarity of Cluster Centroids
-plot(hclust(dist(kms$centers)))              
+#plot(hclust(dist(kms1$centers)))             
 #Euclidean Distance
-plot(hclust(as.dist(1-cor(t(kms$centers))))) 
+#plot(hclust(as.dist(1-cor(t(kms1$centers)))))
 #Pearson Correlation
-plot(hclust(as.dist(
-  abs(outer(rowSums(kms$centers), rowSums(kms$centers), FUN = "-"))
-)))
+#plot(hclust(as.dist(
+#  abs(outer(rowSums(kms$centers), rowSums(kms$centers), FUN = "-"))
+#)))
 #As the amount of ink on image
