@@ -25,6 +25,7 @@ library(spatialfil)
 #save(gnumbers, file="gnumbers.rda")
 #save(gfeatures, file="gfeatures.rda")
 load("gnumbers.rda")
+numbers_orig <- load('numbers.rda')
 #write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
 #write.csv(gfeatures, file = "gfeatures.csv", row.names = FALSE)
 
@@ -231,6 +232,9 @@ pimage(G)
 #gfeatures <- gfeatures[1:5000,]
 
 #THIN A SAMPLE OF THE DATASET ####
+x <- 0
+xt <- 0
+tv <- 0
 sample_orig_nbrs <- numbers_orig[sample(1:nrow(numbers_orig), 5000),]
 for (i in 1:5000){
   x <- toMatrix(sample_orig_nbrs[i,])
@@ -292,7 +296,7 @@ mutate(gfeatures,
        pixelAVG_CentX = obj2[,"pixelAVG_CentX"],
        pixelAVG_CentY = obj2[,"pixelAVG_CentY"])
 
-scaled_features_orig <- scaled_features
+#scaled_features_orig <- scaled_features
 scaled_features <- scale(gfeatures)
 #scaled_features <- gfeatures %>% scale
 
@@ -312,61 +316,60 @@ d_sample_kms <- dist(sample_kms)
 kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
 kms13 <- kmeans(sample_kms, centers = 13, nstart = 5)
 kms18 <- kmeans(sample_kms, centers = 18, nstart = 5)
+kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
 kms22 <- kmeans(sample_kms, centers = 22, nstart = 5)
 kms25 <- kmeans(sample_kms, centers = 25, nstart = 5)
 
 str(kms10)
 str(kms13)
 str(kms18)
+str(kms20)
 str(kms22)
 str(kms25)
 
 kms10$size
 kms13$size
 kms18$size
+kms20$size
 kms22$size
 kms25$size
 
 100*(kms10$betweenss / kms10$totss)
 100*(kms13$betweenss / kms13$totss)
 100*(kms18$betweenss / kms18$totss)
+100*(kms20$betweenss / kms20$totss)
 100*(kms22$betweenss / kms22$totss)
 100*(kms25$betweenss / kms25$totss)
 
 100*(kms10$tot.withinss / kms10$totss)
 100*(kms13$tot.withinss / kms13$totss)
 100*(kms18$tot.withinss / kms18$totss)
+100*(kms20$tot.withinss / kms20$totss)
 100*(kms22$tot.withinss / kms22$totss)
 100*(kms25$tot.withinss / kms25$totss)
 
 plot(hclust(dist(kms10$centers)))
 plot(hclust(dist(kms13$centers)))
-plot(hclust(dist(kms18$centers)))
-plot(hclust(dist(kms22$centers)))
-plot(hclust(dist(kms25$centers)))
+plot(hclust(dist(kms20$centers)))
 
 plot(hclust(as.dist(1-cor(t(kms10$centers)))))
 plot(hclust(as.dist(1-cor(t(kms13$centers)))))
-plot(hclust(as.dist(1-cor(t(kms18$centers)))))
-plot(hclust(as.dist(1-cor(t(kms22$centers)))))
-plot(hclust(as.dist(1-cor(t(kms25$centers)))))
-
+plot(hclust(as.dist(1-cor(t(kms20$centers)))))
 
 fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE) 
 fpc::cluster.stats(d_sample_kms, kms13$cluster, aggregateonly = TRUE) 
-fpc::cluster.stats(d_sample_kms, kms18$cluster, aggregateonly = TRUE) 
-fpc::cluster.stats(d_sample_kms, kms22$cluster, aggregateonly = TRUE) 
-fpc::cluster.stats(d_sample_kms, kms25$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms20$cluster, aggregateonly = TRUE) 
+
 
 
 #CLUSTER OPTIMIZATION
 #Total Within Sum of Squares (WSS) - Cohesion
-ks <- 10:30
+ks <- seq(from = 10, to = 30, by = 2)
 WSS <- sapply(ks, FUN=function(k) {
   kmeans(scaled_features, centers=k, nstart=5)$tot.withinss
 })
 plot(ks, WSS, type="l")
-abline(v=c(10, 13, 18, 22), col="red", lty=2)
+abline(v=c(10, 13, 20, 25), col="red", lty=2)
 
 ks2 <- seq(from = 10, to = 40, by = 2)
 WSS2 <- sapply(ks2, FUN=function(k) {
@@ -374,7 +377,7 @@ WSS2 <- sapply(ks2, FUN=function(k) {
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks2, WSS2, type="l")
-abline(v=c(10, 13, 18, 22), col="red", lty=2)
+abline(v=c(10, 13, 20, 25), col="red", lty=2)
 
 ks3 <- seq(from = 10, to = 50, by = 5)
 WSS3 <- sapply(ks3, FUN=function(k) {
@@ -382,7 +385,7 @@ WSS3 <- sapply(ks3, FUN=function(k) {
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks3, WSS3, type="l")
-abline(v=c(10, 13, 18, 22, 25), col="red", lty=2)
+abline(v=c(10, 13, 20, 25), col="red", lty=2)
 
 #Average Silhouette Width (ASW) - Cohesion and Separation
 ASW <- sapply(ks, FUN=function(k) {
@@ -393,10 +396,11 @@ ASW <- sapply(ks, FUN=function(k) {
 
 plot(ks, ASW, type="l")
 #ks[which.max(ASW)] #10
-abline(v=c(10, 13, 18, 22), col="red", lty=2)
+abline(v=c(10, 13, 20, 22, 25), col="red", lty=2)
 #
 
-#CLUSTERING ON THE RAW DATA
+
+#CLUSTERING ON THE RAW DATA - REFERENCE CODE FROM CLASS ####
 #View the Centroid Images
 #pimage(toMatrix(kms$centers[1,]))
 #pimage(toMatrix(kms$centers[2,]))
