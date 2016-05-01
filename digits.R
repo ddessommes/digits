@@ -25,7 +25,6 @@ library(spatialfil)
 #save(gnumbers, file="gnumbers.rda")
 #save(gfeatures, file="gfeatures.rda")
 load("gnumbers.rda")
-numbers_orig <- load('numbers.rda')
 #write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
 #write.csv(gfeatures, file = "gfeatures.csv", row.names = FALSE)
 
@@ -223,19 +222,20 @@ pimage(G)
 #A) Does Thinning help?
 #B) Does PCA help?
 #C) Does Outlier Removal help?
+
+#THIN A SAMPLE OF THE DATASET ####
+#load("numbers.rda")
 #numbers_orig <- numbers
-#numbers <- numbers_orig
 #numbers[numbers != 0] <- 0
 #numbers <- numbers[1:5000,]
 #gfeatures_orig <- gfeatures
 #gfeatures[gfeatures != 0] <- 0
 #gfeatures <- gfeatures[1:5000,]
-
-#THIN A SAMPLE OF THE DATASET ####
 x <- 0
 xt <- 0
 tv <- 0
 sample_orig_nbrs <- numbers_orig[sample(1:nrow(numbers_orig), 5000),]
+rm(numbers_orig)
 for (i in 1:5000){
   x <- toMatrix(sample_orig_nbrs[i,])
   xt <- thinImage(x>128)
