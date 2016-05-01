@@ -273,24 +273,13 @@ dist_sample_scl <- dist(sample_scaled)
 iVAT(dist_sample_scl)
 
 #CLUSTERING WITH SAMPLES OF 5000 AND CHANGING # OF CENTERS FROM 10 TO 20 BY 2
-s10 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-kms10 <- kmeans(s10, centers = 10, nstart = 5)
-
-s12 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-kms12 <- kmeans(s12, centers = 12, nstart = 5)
-
-s14 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-kms14 <- kmeans(s14, centers = 14, nstart = 5)
-
-s16 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-kms16 <- kmeans(s16, centers = 16, nstart = 5)
-
-s18 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-kms18 <- kmeans(s18, centers = 18, nstart = 5)
-
-s20 <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-kms20 <- kmeans(s20, centers = 20, nstart = 5)
-
+sample_kms <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
+kms12 <- kmeans(sample_kms, centers = 12, nstart = 5)
+kms14 <- kmeans(sample_kms, centers = 14, nstart = 5)
+kms16 <- kmeans(sample_kms, centers = 16, nstart = 5)
+kms18 <- kmeans(sample_kms, centers = 18, nstart = 5)
+kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
 
 str(kms10)
 str(kms12)
@@ -333,6 +322,28 @@ plot(hclust(as.dist(1-cor(t(kms14$centers)))))
 plot(hclust(as.dist(1-cor(t(kms16$centers)))))
 plot(hclust(as.dist(1-cor(t(kms18$centers)))))
 plot(hclust(as.dist(1-cor(t(kms20$centers)))))
+
+fpc::cluster.stats(sample_kms, kms10$cluster, silhouette = TRUE, aggregateonly = TRUE) 
+fpc::cluster.stats(sample_kms, kms12$cluster) 
+fpc::cluster.stats(sample_kms, kms14$cluster) 
+fpc::cluster.stats(sample_kms, kms16$cluster) 
+fpc::cluster.stats(sample_kms, kms18$cluster) 
+fpc::cluster.stats(sample_kms, kms20$cluster) 
+
+#CLUSTER OPTIMIZATION
+ks <- 10:30
+WSS <- sapply(ks, FUN=function(k) {
+  kmeans(scaled_features, centers=k, nstart=5)$tot.withinss
+})
+plot(ks, WSS, type="l")
+
+ks2 <- seq(from = 10, to = 40, by = 2)
+WSS2 <- sapply(ks2, FUN=function(k) {
+  kmeans(scaled_features[sample(1:nrow(scaled_features), 5000),], 
+         centers=k, nstart=5)$tot.withinss
+})
+plot(ks2, WSS2, type="l")
+
 
 #CLUSTERING ON THE RAW DATA
 #View the Centroid Images
