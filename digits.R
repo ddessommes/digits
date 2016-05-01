@@ -18,15 +18,16 @@ library(spatialfil)
 
 
 #LOAD/SAVE DATA
-#numbers <- read.csv("numbers.csv", header=TRUE)
+#gnumbers <- read.csv("gnumbers.csv", header=TRUE)
 #num_labels <- read.csv("numbers_labels.csv", header=TRUE)
 #save(numbers, file="numbers.rda")
 #save(num_labels, file="num_labels.rda")
 #save(gnumbers, file="gnumbers.rda")
 #save(gfeatures, file="gfeatures.rda")
-load("numbers.rda")
+load("gnumbers.rda")
 #write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
-#write.csv(gfeatures, file = "gnumbers.csv", row.names = FALSE)
+#write.csv(gfeatures, file = "gfeatures.csv", row.names = FALSE)
+
 
 
 #CREATE CLUSTERING ENTROPY AND PURITY FUNCTIONS 
@@ -128,7 +129,7 @@ gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
 pimage(toMatrix(numbers[2,]))
 
 
-#IMAGE BLURR with a Gaussian Kernel
+#IMAGE BLURR with a Gaussian Kernel ####
 blurr <- rbind(
   c(0.0, 0.5, 0.0),
   c(0.5, 1.0, 0.5),
@@ -147,8 +148,7 @@ blurr <- blurr/sum(blurr) #normalize to sum to 1
 #x1_bb40 <- x1_bblur>=quantile(x1_bblur[x1_bblur>0], 1-.4) #Keep only 40% darkest
 #pimage(x1_bb40)
 
-
-#PATTERN EXTRACTION
+#PATTERN EXTRACTION ####
 #Example of vertical pattern with 2 dark pixels - i.e. NUMBER ONE
 conv_vc <- rbind(c(0,0,1,1,0,0),
                  c(0,0,1,1,0,0),
@@ -175,8 +175,16 @@ pimage(conv_hc)
 #pimage(c2)
 #pimage(c2>quantile(c1, .95)) # use 5% of the highest values
 
+#IMAGE THINNING ####
+source("thinning.R")
+is <- toMatrix(numbers[154,])
+pimage(is)
+pimage(is>128)
+is_thin <- thinImage(is>128)
+pimage(is_thin)
+(v <- toVector(is_thin))
 
-#IMAGE EDGE DETECT with a Gaussian Kernel
+#IMAGE EDGE DETECT with a Gaussian Kernel ####
 #edge <- rbind(
 #  c(0.0,-2.0, 0.0),
 # c(-2.0, 8.0,-2.0),
@@ -186,8 +194,20 @@ pimage(conv_hc)
 #c3 <- convolve_2d(x_bb40, edge)
 #pimage(c3)
 #pimage(c3<0)
+####
 
-#spatialfil() easily generates different Gaussian kernel types
+#END POINT DETECTION ####
+#source("thinning.R")
+#pimage(m>100)
+#m_thin <- thinImage(m>100)
+#pimage(m_thin)
+#mc4 <- convolve_2d(m_thin, edge)
+#pimage(mc4)
+#pimage(mc4>4)
+#sum(mc4>4)
+
+
+#spatialfil() easily generates different Gaussian kernel types ####
 cG <- convKernel(sigma = 1.5, k = "gaussian")   #Gaussian Filter
 G <- cG$matrix
 cS <- convKernel(sigma = 1.5, k = "sobel")      #Sobel Filter
@@ -198,50 +218,73 @@ cK <- convKernel(sigma = 1.5, k = "LoG")        #Laplacian of Gaussian Filter
 K <- cK$matrix
 pimage(G)
 
+#REINITIALIZE KEY DATASETS AS NEEDED TO REUSE CODE INSTEAD OF ADDING BLOCKS ####
+#A) Does Thinning help?
+#B) Does PCA help?
+#C) Does Outlier Removal help?
+#numbers_orig <- numbers
+#numbers <- numbers_orig
+#numbers[numbers != 0] <- 0
+#numbers <- numbers[1:5000,]
+#gfeatures_orig <- gfeatures
+#gfeatures[gfeatures != 0] <- 0
+#gfeatures <- gfeatures[1:5000,]
 
-#CONVOLVE THE DATA SET FOR HORIZONTAL AND VERTICAL LINE PATTERNS
+#THIN A SAMPLE OF THE DATASET ####
+sample_orig_nbrs <- numbers_orig[sample(1:nrow(numbers_orig), 5000),]
+for (i in 1:5000){
+  x <- toMatrix(sample_orig_nbrs[i,])
+  xt <- thinImage(x>128)
+  tv <- toVector(xt)
+  numbers[i,] <- tv
+}
+
+#CONVOLVE THE DATA SET FOR HORIZONTAL AND VERTICAL LINE PATTERNS ####
 #Initialize Variables
 x <- 0
 obj = matrix(nrow = 42000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
-#Execute For Loop
+#Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
 for(i in 1:42000){
 x <- toMatrix(numbers[i,])
-x_25 <- x>=quantile(x[x>0], 1-.25) #Keep only 25% darkest
-xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines
-xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines
-xhq <- (xh>quantile(xh, .97)) # use (1-x)% of the highest values
-xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values
+x_25 <- x>=quantile(x[x>0], 1-0) #Keep only X% darkest ##1-0.25 ##1-0
+xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines 
+xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines 
+xhq <- (xh>quantile(xh, .97)) # use (1-x)% of the highest values ##.97 ##.01
+xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values ##.97 ##.01
 obj[i,1] <- sum(toVector(xhq))
 obj[i,2] <- sum(toVector(xvq))
 }
 colnames(obj) <- c("pixelSUM_Horiz","pixelSUM_Vert")
+
 #pimage(x)
 #pimage(x_25)
 #pimage(xhq) 
 #pimage(xvq) 
 
 
-#CONVOLVE THE DATA SET FOR SOBEL FILTER from spatialfil() AND CENTROID (x,y)
+#CONVOLVE THE DATA SET FOR SOBEL FILTER from spatialfil() AND CENTROID (x,y) ####
 #Initialize Variables
 z <- 0
 obj2 = matrix(nrow = 42000, ncol = 3, byrow = TRUE) #create empty matrix to dump results into
-#Execute For Loop
+#Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
 for(i in 1:42000){
   z <- toMatrix(numbers[i,])
-  #z_25 <- z>=quantile(z[z>0], 1-.25) #Keep only 25% darkest
+  z_25 <- z>=quantile(z[z>0], 1-.25) #Keep only 25% darkest ##1-.25 ##1-0
   zS <- convolve_2d(z, S) #this attempts to convolve with Sobel
-  zSq <- (zS>quantile(zS, .97)) # use (1-x)% of the highest values
+  zSq <- (zS>quantile(zS, .97)) # use (1-x)% of the highest values ##.97 #.01
   cI <- calcCentroid(z)
   obj2[i,1] <- sum(toVector(zSq))
   obj2[i,2] <- cI[1]
   obj2[i,3] <- cI[2]
 }
 colnames(obj2) <- c("pixelSUM_Sobel","pixelAVG_CentX", "pixelAVG_CentY")
+
 #pimage(z)
 #pimage(z_25)
 #pimage(zG) 
 #pimage(zGq)
 
+#UPDATE SELECTED FEATURES DATA FRAME ####
 mutate(gfeatures, 
        pixelSUM_Horiz = obj[,"pixelSUM_Horiz"],
        pixelSUM_Vert = obj[,"pixelSUM_Vert"],
@@ -249,93 +292,81 @@ mutate(gfeatures,
        pixelAVG_CentX = obj2[,"pixelAVG_CentX"],
        pixelAVG_CentY = obj2[,"pixelAVG_CentY"])
 
+scaled_features_orig <- scaled_features
 scaled_features <- scale(gfeatures)
 #scaled_features <- gfeatures %>% scale
 
-#END POINT DETECTION
 
-source("thinning.R")
-pimage(m>100)
-m_thin <- thinImage(m>100)
-pimage(m_thin)
-mc4 <- convolve_2d(m_thin, edge)
-pimage(mc4)
-pimage(mc4>4)
-sum(mc4>4)
-
-#CONFIRM CLUSTERING TENDENCY
+#CONFIRM CLUSTERING TENDENCY ####
 #Distance Matrix
-sample_scaled <- scaled_features[sample(1:nrow(scaled_features), 1000),]
-sample_scaled <- as.data.frame(sample_scaled)
-plot(sample_scaled$pixelSUM_ALL)
-dist_sample_scl <- dist(sample_scaled)
+sample_cviz <- scaled_features[sample(1:nrow(scaled_features), 500),] # for Viz need smaller sample
+sample_cviz_df <- as.data.frame(sample_cviz) #next plot needs DF
+plot(sample_cviz_df$pixelSUM_ALL)
+d_sample_cviz <- dist(sample_cviz)
 #VAT(dist_sample_scl)
-iVAT(dist_sample_scl)
+iVAT(d_sample_cviz)
 
 #CLUSTERING WITH SAMPLES OF 5000 AND CHANGING # OF CENTERS FROM 10 TO 20 BY 2
 sample_kms <- scaled_features[sample(1:nrow(scaled_features), 5000),]
+d_sample_kms <- dist(sample_kms)
 kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
-kms12 <- kmeans(sample_kms, centers = 12, nstart = 5)
-kms14 <- kmeans(sample_kms, centers = 14, nstart = 5)
-kms16 <- kmeans(sample_kms, centers = 16, nstart = 5)
+kms13 <- kmeans(sample_kms, centers = 13, nstart = 5)
 kms18 <- kmeans(sample_kms, centers = 18, nstart = 5)
-kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
+kms22 <- kmeans(sample_kms, centers = 22, nstart = 5)
+kms25 <- kmeans(sample_kms, centers = 25, nstart = 5)
 
 str(kms10)
-str(kms12)
-str(kms14)
-str(kms16)
+str(kms13)
 str(kms18)
-str(kms20)
+str(kms22)
+str(kms25)
 
 kms10$size
-kms12$size
-kms14$size
-kms16$size
+kms13$size
 kms18$size
-kms20$size
+kms22$size
+kms25$size
 
 100*(kms10$betweenss / kms10$totss)
-100*(kms12$betweenss / kms12$totss)
-100*(kms14$betweenss / kms14$totss)
-100*(kms16$betweenss / kms16$totss)
+100*(kms13$betweenss / kms13$totss)
 100*(kms18$betweenss / kms18$totss)
-100*(kms20$betweenss / kms20$totss)
+100*(kms22$betweenss / kms22$totss)
+100*(kms25$betweenss / kms25$totss)
 
 100*(kms10$tot.withinss / kms10$totss)
-100*(kms12$tot.withinss / kms12$totss)
-100*(kms14$tot.withinss / kms14$totss)
-100*(kms16$tot.withinss / kms16$totss)
+100*(kms13$tot.withinss / kms13$totss)
 100*(kms18$tot.withinss / kms18$totss)
-100*(kms20$tot.withinss / kms20$totss)
+100*(kms22$tot.withinss / kms22$totss)
+100*(kms25$tot.withinss / kms25$totss)
 
 plot(hclust(dist(kms10$centers)))
-plot(hclust(dist(kms12$centers)))
-plot(hclust(dist(kms14$centers)))
-plot(hclust(dist(kms16$centers)))
+plot(hclust(dist(kms13$centers)))
 plot(hclust(dist(kms18$centers)))
-plot(hclust(dist(kms20$centers)))
+plot(hclust(dist(kms22$centers)))
+plot(hclust(dist(kms25$centers)))
 
 plot(hclust(as.dist(1-cor(t(kms10$centers)))))
-plot(hclust(as.dist(1-cor(t(kms12$centers)))))
-plot(hclust(as.dist(1-cor(t(kms14$centers)))))
-plot(hclust(as.dist(1-cor(t(kms16$centers)))))
+plot(hclust(as.dist(1-cor(t(kms13$centers)))))
 plot(hclust(as.dist(1-cor(t(kms18$centers)))))
-plot(hclust(as.dist(1-cor(t(kms20$centers)))))
+plot(hclust(as.dist(1-cor(t(kms22$centers)))))
+plot(hclust(as.dist(1-cor(t(kms25$centers)))))
 
-fpc::cluster.stats(sample_kms, kms10$cluster, silhouette = TRUE, aggregateonly = TRUE) 
-fpc::cluster.stats(sample_kms, kms12$cluster) 
-fpc::cluster.stats(sample_kms, kms14$cluster) 
-fpc::cluster.stats(sample_kms, kms16$cluster) 
-fpc::cluster.stats(sample_kms, kms18$cluster) 
-fpc::cluster.stats(sample_kms, kms20$cluster) 
+
+fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms13$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms18$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms22$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms25$cluster, aggregateonly = TRUE) 
+
 
 #CLUSTER OPTIMIZATION
+#Total Within Sum of Squares (WSS) - Cohesion
 ks <- 10:30
 WSS <- sapply(ks, FUN=function(k) {
   kmeans(scaled_features, centers=k, nstart=5)$tot.withinss
 })
 plot(ks, WSS, type="l")
+abline(v=c(10, 13, 18, 22), col="red", lty=2)
 
 ks2 <- seq(from = 10, to = 40, by = 2)
 WSS2 <- sapply(ks2, FUN=function(k) {
@@ -343,7 +374,27 @@ WSS2 <- sapply(ks2, FUN=function(k) {
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks2, WSS2, type="l")
+abline(v=c(10, 13, 18, 22), col="red", lty=2)
 
+ks3 <- seq(from = 10, to = 50, by = 5)
+WSS3 <- sapply(ks3, FUN=function(k) {
+  kmeans(scaled_features[sample(1:nrow(scaled_features), 5000),], 
+         centers=k, nstart=5)$tot.withinss
+})
+plot(ks3, WSS3, type="l")
+abline(v=c(10, 13, 18, 22, 25), col="red", lty=2)
+
+#Average Silhouette Width (ASW) - Cohesion and Separation
+ASW <- sapply(ks, FUN=function(k) {
+  fpc::cluster.stats(d_sample_cviz, kmeans(sample_cviz,
+                                           centers=k,
+                                           nstart=5)$cluster)$avg.silwidth
+})
+
+plot(ks, ASW, type="l")
+#ks[which.max(ASW)] #10
+abline(v=c(10, 13, 18, 22), col="red", lty=2)
+#
 
 #CLUSTERING ON THE RAW DATA
 #View the Centroid Images
