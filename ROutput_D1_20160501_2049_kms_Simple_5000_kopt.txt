@@ -1,0 +1,280 @@
+> kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
+> kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
+> kms30 <- kmeans(sample_kms, centers = 30, nstart = 5)
+> 
+> str(kms10)
+List of 9
+ $ cluster     : int [1:5000] 10 6 7 3 10 2 2 2 2 9 ...
+ $ centers     : num [1:10, 1:11] 0.0192 -0.612 -0.1066 -0.0936 1.1335 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:10] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:11] "pixelAVG_ALL" "pixelPCT_H1" "pixelPCT_Q1" "pixelPCT_Q2" ...
+ $ totss       : num 30038
+ $ withinss    : num [1:10] 1764 1016 1267 1103 912 ...
+ $ tot.withinss: num 11601
+ $ betweenss   : num 18436
+ $ size        : int [1:10] 66 713 463 698 412 670 438 467 645 428
+ $ iter        : int 5
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms20)
+List of 9
+ $ cluster     : int [1:5000] 2 1 14 10 17 19 12 2 12 18 ...
+ $ centers     : num [1:20, 1:11] -0.931 0.586 -0.409 0.94 1.463 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:20] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:11] "pixelAVG_ALL" "pixelPCT_H1" "pixelPCT_Q1" "pixelPCT_Q2" ...
+ $ totss       : num 30038
+ $ withinss    : num [1:20] 380 376 431 327 346 ...
+ $ tot.withinss: num 7981
+ $ betweenss   : num 22056
+ $ size        : int [1:20] 345 331 244 237 145 156 236 302 113 191 ...
+ $ iter        : int 9
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms30)
+List of 9
+ $ cluster     : int [1:5000] 1 9 20 26 13 19 6 14 14 3 ...
+ $ centers     : num [1:30, 1:11] 1.187 1.078 -0.831 0.919 1.785 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:30] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:11] "pixelAVG_ALL" "pixelPCT_H1" "pixelPCT_Q1" "pixelPCT_Q2" ...
+ $ totss       : num 30038
+ $ withinss    : num [1:30] 203 129 212 0 277 ...
+ $ tot.withinss: num 6552
+ $ betweenss   : num 23486
+ $ size        : int [1:30] 162 166 217 1 110 203 177 168 230 196 ...
+ $ iter        : int 7
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> 
+> kms10$size
+ [1]  66 713 463 698 412 670 438 467 645 428
+> kms20$size
+ [1] 345 331 244 237 145 156 236 302 113 191 322 394 215 278 263 268 317 287 353   3
+> kms30$size
+ [1] 162 166 217   1 110 203 177 168 230 196 114 180 209 227 210 231 201  87 214 201 233 232  86
+[24] 117 181 192  43 233  73 106
+> 
+> 100*(kms10$betweenss / kms10$totss)
+[1] 61.37796
+> 100*(kms20$betweenss / kms20$totss)
+[1] 73.42914
+> 100*(kms30$betweenss / kms30$totss)
+[1] 78.18754
+> 
+> 100*(kms10$tot.withinss / kms10$totss)
+[1] 38.62204
+> 100*(kms20$tot.withinss / kms20$totss)
+[1] 26.57086
+> 100*(kms30$tot.withinss / kms30$totss)
+[1] 21.81246
+> 
+> plot(hclust(dist(kms10$centers)))
+> plot(hclust(dist(kms20$centers)))
+> plot(hclust(dist(kms30$centers)))
+> 
+> plot(hclust(as.dist(1-cor(t(kms10$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms20$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms30$centers)))))
+> 
+> fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE) 
+$n
+[1] 5000
+
+$cluster.number
+[1] 10
+
+$min.cluster.size
+[1] 66
+
+$noisen
+[1] 0
+
+$average.between
+[1] 3.31424
+
+$average.within
+[1] 1.783867
+
+$max.diameter
+[1] 33.92658
+
+$min.separation
+[1] 0.1229578
+
+$ave.within.cluster.ss
+[1] 2.320229
+
+$avg.silwidth
+[1] 0.2001748
+
+$g2
+NULL
+
+$g3
+NULL
+
+$pearsongamma
+[1] 0.330728
+
+$dunn
+[1] 0.003624231
+
+$dunn2
+[1] 0.4722937
+
+$entropy
+[1] 2.214425
+
+$wb.ratio
+[1] 0.5382431
+
+$ch
+[1] 881.1205
+
+$widestgap
+[1] 19.91582
+
+$sindex
+[1] 0.2665402
+
+$corrected.rand
+NULL
+
+$vi
+NULL
+
+> fpc::cluster.stats(d_sample_kms, kms20$cluster, aggregateonly = TRUE) 
+$n
+[1] 5000
+
+$cluster.number
+[1] 20
+
+$min.cluster.size
+[1] 3
+
+$noisen
+[1] 0
+
+$average.between
+[1] 3.239078
+
+$average.within
+[1] 1.49428
+
+$max.diameter
+[1] 22.72593
+
+$min.separation
+[1] 0.1091135
+
+$ave.within.cluster.ss
+[1] 1.596251
+
+$avg.silwidth
+[1] 0.1841648
+
+$g2
+NULL
+
+$g3
+NULL
+
+$pearsongamma
+[1] 0.2744049
+
+$dunn
+[1] 0.004801276
+
+$dunn2
+[1] 0.1168737
+
+$entropy
+[1] 2.906058
+
+$wb.ratio
+[1] 0.4613287
+
+$ch
+[1] 724.3334
+
+$widestgap
+[1] 19.91582
+
+$sindex
+[1] 0.2456647
+
+$corrected.rand
+NULL
+
+$vi
+NULL
+
+> fpc::cluster.stats(d_sample_kms, kms30$cluster, aggregateonly = TRUE)
+$n
+[1] 5000
+
+$cluster.number
+[1] 30
+
+$min.cluster.size
+[1] 1
+
+$noisen
+[1] 0
+
+$average.between
+[1] 3.209975
+
+$average.within
+[1] 1.370974
+
+$max.diameter
+[1] 14.33178
+
+$min.separation
+[1] 0.07514262
+
+$ave.within.cluster.ss
+[1] 1.310389
+
+$avg.silwidth
+[1] 0.1814803
+
+$g2
+NULL
+
+$g3
+NULL
+
+$pearsongamma
+[1] 0.2388195
+
+$dunn
+[1] 0.005243075
+
+$dunn2
+[1] 0.3459593
+
+$entropy
+[1] 3.310519
+
+$wb.ratio
+[1] 0.4270979
+
+$ch
+[1] 614.3153
+
+$widestgap
+[1] 6.060251
+
+$sindex
+[1] 0.2351084
+
+$corrected.rand
+NULL
+
+$vi
+NULL

@@ -1,0 +1,336 @@
+> str(kms10)
+List of 9
+ $ cluster     : int [1:5000] 7 10 7 3 6 2 10 7 6 3 ...
+ $ centers     : num [1:10, 1:11] -1.101 -0.125 1.102 -0.16 -3.142 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:10] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:11] "pixelAVG_ALL" "pixelPCT_H1" "pixelPCT_Q1" "pixelPCT_Q2" ...
+ $ totss       : num 30328
+ $ withinss    : num [1:10] 497 1022 1299 1057 220 ...
+ $ tot.withinss: num 8808
+ $ betweenss   : num 21520
+ $ size        : int [1:10] 122 438 1021 692 75 1038 714 137 324 439
+ $ iter        : int 8
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms20)
+List of 9
+ $ cluster     : int [1:5000] 10 1 9 13 6 3 5 12 7 9 ...
+ $ centers     : num [1:20, 1:11] 0.639 -2.183 -0.873 -0.275 -0.908 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:20] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:11] "pixelAVG_ALL" "pixelPCT_H1" "pixelPCT_Q1" "pixelPCT_Q2" ...
+ $ totss       : num 30328
+ $ withinss    : num [1:20] 374 257 297 387 281 ...
+ $ tot.withinss: num 6510
+ $ betweenss   : num 23818
+ $ size        : int [1:20] 247 75 147 274 127 505 195 107 452 131 ...
+ $ iter        : int 9
+ $ ifault      : int 0
+ - attr(*, "class")= chr "kmeans"
+> str(kms30)
+List of 9
+ $ cluster     : int [1:5000] 28 18 29 23 25 19 3 13 25 15 ...
+ $ centers     : num [1:30, 1:11] -1.1 -1.537 -0.349 0.489 0.227 ...
+  ..- attr(*, "dimnames")=List of 2
+  .. ..$ : chr [1:30] "1" "2" "3" "4" ...
+  .. ..$ : chr [1:11] "pixelAVG_ALL" "pixelPCT_H1" "pixelPCT_Q1" "pixelPCT_Q2" ...
+ $ totss       : num 30328
+ $ withinss    : num [1:30] 163 134 180 218 138 ...
+ $ tot.withinss: num 5509
+ $ betweenss   : num 24819
+ $ size        : int [1:30] 72 118 98 365 114 258 42 102 333 39 ...
+ $ iter        : int 11
+ $ ifault      : int 2
+ - attr(*, "class")= chr "kmeans"
+> 
+> kms10$size
+ [1]  122  438 1021  692   75 1038  714  137  324  439
+> kms20$size
+ [1] 247  75 147 274 127 505 195 107 452 131 533 388 183 264  83 231 503 164  75 316
+> kms30$size
+ [1]  72 118  98 365 114 258  42 102 333  39  40 306 212 199 282 194  64 175 170  86  75 102 164
+[24] 207 321  40 101 215 358 148
+> 
+> 100*(kms10$betweenss / kms10$totss)
+[1] 70.95915
+> 100*(kms20$betweenss / kms20$totss)
+[1] 78.53599
+> 100*(kms30$betweenss / kms30$totss)
+[1] 81.83442
+> 
+> 100*(kms10$tot.withinss / kms10$totss)
+[1] 29.04085
+> 100*(kms20$tot.withinss / kms20$totss)
+[1] 21.46401
+> 100*(kms30$tot.withinss / kms30$totss)
+[1] 18.16558
+> 
+> plot(hclust(dist(kms10$centers)))
+> plot(hclust(dist(kms20$centers)))
+> plot(hclust(dist(kms30$centers)))
+> 
+> plot(hclust(as.dist(1-cor(t(kms10$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms20$centers)))))
+> plot(hclust(as.dist(1-cor(t(kms30$centers)))))
+> 
+> fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE) 
+$n
+[1] 5000
+
+$cluster.number
+[1] 10
+
+$min.cluster.size
+[1] 75
+
+$noisen
+[1] 0
+
+$average.between
+[1] 3.142105
+
+$average.within
+[1] 1.589899
+
+$max.diameter
+[1] 8.427618
+
+$min.separation
+[1] 0.1703419
+
+$ave.within.cluster.ss
+[1] 1.7615
+
+$avg.silwidth
+[1] 0.1730576
+
+$g2
+NULL
+
+$g3
+NULL
+
+$pearsongamma
+[1] 0.2872217
+
+$dunn
+[1] 0.02021234
+
+$dunn2
+[1] 0.7364349
+
+$entropy
+[1] 2.058791
+
+$wb.ratio
+[1] 0.5059981
+
+$ch
+[1] 1354.744
+
+$widestgap
+[1] 3.77754
+
+$sindex
+[1] 0.3289352
+
+$corrected.rand
+NULL
+
+$vi
+NULL
+
+> fpc::cluster.stats(d_sample_kms, kms20$cluster, aggregateonly = TRUE) 
+$n
+[1] 5000
+
+$cluster.number
+[1] 20
+
+$min.cluster.size
+[1] 75
+
+$noisen
+[1] 0
+
+$average.between
+[1] 3.030081
+
+$average.within
+[1] 1.344584
+
+$max.diameter
+[1] 6.995367
+
+$min.separation
+[1] 0.1654377
+
+$ave.within.cluster.ss
+[1] 1.30192
+
+$avg.silwidth
+[1] 0.1564968
+
+$g2
+NULL
+
+$g3
+NULL
+
+$pearsongamma
+[1] 0.2218244
+
+$dunn
+[1] 0.02364961
+
+$dunn2
+[1] 0.6095724
+
+$entropy
+[1] 2.824847
+
+$wb.ratio
+[1] 0.4437451
+
+$ch
+[1] 959.0329
+
+$widestgap
+[1] 3.77754
+
+$sindex
+[1] 0.313229
+
+$corrected.rand
+NULL
+
+$vi
+NULL
+
+> fpc::cluster.stats(d_sample_kms, kms30$cluster, aggregateonly = TRUE) 
+$n
+[1] 5000
+
+$cluster.number
+[1] 30
+
+$min.cluster.size
+[1] 39
+
+$noisen
+[1] 0
+
+$average.between
+[1] 2.995479
+
+$average.within
+[1] 1.24293
+
+$max.diameter
+[1] 6.995367
+
+$min.separation
+[1] 0.153037
+
+$ave.within.cluster.ss
+[1] 1.101851
+
+$avg.silwidth
+[1] 0.1526732
+
+$g2
+NULL
+
+$g3
+NULL
+
+$pearsongamma
+[1] 0.1908498
+
+$dunn
+[1] 0.02187691
+
+$dunn2
+[1] 0.5899001
+
+$entropy
+[1] 3.221058
+
+$wb.ratio
+[1] 0.4149353
+
+$ch
+[1] 772.0493
+
+$widestgap
+[1] 3.77754
+
+$sindex
+[1] 0.3128672
+
+$corrected.rand
+NULL
+
+$vi
+NULL
+
+> 
+> 
+> 
+> #CLUSTER OPTIMIZATION
+> #Total Within Sum of Squares (WSS) - Cohesion
+> ks <- seq(from = 10, to = 30, by = 2)
+> WSS <- sapply(ks, FUN=function(k) {
++   kmeans(scaled_features, centers=k, nstart=5)$tot.withinss
++ })
+There were 11 warnings (use warnings() to see them)
+> plot(ks, WSS, type="l")
+> abline(v=c(10, 15, 20, 25), col="red", lty=2)
+> 
+> ks2 <- seq(from = 10, to = 40, by = 2)
+> WSS2 <- sapply(ks2, FUN=function(k) {
++   kmeans(scaled_features[sample(1:nrow(scaled_features), 5000),], 
++          centers=k, nstart=5)$tot.withinss
++ })
+There were 17 warnings (use warnings() to see them)
+> plot(ks2, WSS2, type="l")
+> abline(v=c(10, 15, 20, 25), col="red", lty=2)
+> 
+> ks3 <- seq(from = 10, to = 50, by = 5)
+> WSS3 <- sapply(ks3, FUN=function(k) {
++   kmeans(scaled_features[sample(1:nrow(scaled_features), 5000),], 
++          centers=k, nstart=5)$tot.withinss
++ })
+Warning messages:
+1: did not converge in 10 iterations 
+2: did not converge in 10 iterations 
+3: did not converge in 10 iterations 
+4: did not converge in 10 iterations 
+5: did not converge in 10 iterations 
+6: did not converge in 10 iterations 
+7: did not converge in 10 iterations 
+8: did not converge in 10 iterations 
+9: did not converge in 10 iterations 
+> plot(ks3, WSS3, type="l")
+> abline(v=c(10, 15, 20, 25), col="red", lty=2)
+> 
+> #Average Silhouette Width (ASW) - Cohesion and Separation
+> ASW <- sapply(ks, FUN=function(k) {
++   fpc::cluster.stats(d_sample_cviz, kmeans(sample_cviz,
++                                            centers=k,
++                                            nstart=5)$cluster)$avg.silwidth
++ })
+Warning messages:
+1: did not converge in 10 iterations 
+2: did not converge in 10 iterations 
+3: did not converge in 10 iterations 
+4: did not converge in 10 iterations 
+5: did not converge in 10 iterations 
+6: did not converge in 10 iterations 
+7: did not converge in 10 iterations 
+> 
+> plot(ks, ASW, type="l")
+> #ks[which.max(ASW)] #10
+> abline(v=c(10, 15, 20, 25), col="red", lty=2)
+> #

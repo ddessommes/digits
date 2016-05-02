@@ -87,45 +87,8 @@ convolve_2d <- cxxfunction(signature(sampleS = "numeric",
                            return output;
                            ')
 
-
-#DATA OPERATIONS dplyr
-#Reference
-#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
-
-gnumbers <- numbers %>% tbl_df
-gnumbers %>% glimpse
-
-gnumbers <- gnumbers %>% mutate(pixelSUM_ALL = rowSums(gnumbers))
-#NOTE: If pixel columns have been rearranged prior to doing this IT may NOT work!
-gnumbers$pixelSUM_H1 <- select(gnumbers, pixel0:pixel391) %>% rowSums
-gnumbers$pixelSUM_H2 <- select(gnumbers, pixel392:pixel783) %>% rowSums
-gnumbers$pixelSUM_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowSums
-gnumbers$pixelSUM_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowSums
-gnumbers$pixelSUM_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowSums
-gnumbers$pixelSUM_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowSums
-#Get Ratios
-gnumbers <- gnumbers %>% mutate(pixelPCT_H1 = (pixelSUM_H1/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_H2 = (pixelSUM_H2/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q1 = (pixelSUM_Q1/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q2 = (pixelSUM_Q2/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q3 = (pixelSUM_Q3/pixelSUM_ALL))
-gnumbers <- gnumbers %>% mutate(pixelPCT_Q4 = (pixelSUM_Q4/pixelSUM_ALL))
-#Get Averages
-gnumbers <- gnumbers %>% mutate(pixelAVG_ALL = rowMeans(gnumbers))
-gnumbers$pixelAVG_H1 <- select(gnumbers, pixel0:pixel391) %>% rowMeans
-gnumbers$pixelAVG_H2 <- select(gnumbers, pixel392:pixel783) %>% rowMeans
-gnumbers$pixelAVG_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowMeans
-gnumbers$pixelAVG_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowMeans
-gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
-gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
-gnumbers %>% glimpse
-save(gnumbers, file="gnumbers.rda")
-gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
-save(gfeatures, file="gfeatures.rda")
-
-#VISUALIZE SAMPLE DATA
+#VISUALIZE SAMPLE DATA ####
 pimage(toMatrix(numbers[2,]))
-
 
 #IMAGE BLURR with a Gaussian Kernel ####
 blurr <- rbind(
@@ -173,14 +136,15 @@ pimage(conv_hc)
 #pimage(c2)
 #pimage(c2>quantile(c1, .95)) # use 5% of the highest values
 
-#IMAGE THINNING ####
 source("thinning.R")
-is <- toMatrix(numbers[154,])
-pimage(is)
-pimage(is>128)
-is_thin <- thinImage(is>128)
-pimage(is_thin)
-(v <- toVector(is_thin))
+#IMAGE THINNING ####
+#source("thinning.R")
+#is <- toMatrix(numbers[154,])
+#pimage(is)
+#pimage(is>128)
+#is_thin <- thinImage(is>128)
+#pimage(is_thin)
+#(v <- toVector(is_thin))
 
 #IMAGE EDGE DETECT with a Gaussian Kernel ####
 #edge <- rbind(
@@ -192,7 +156,6 @@ pimage(is_thin)
 #c3 <- convolve_2d(x_bb40, edge)
 #pimage(c3)
 #pimage(c3<0)
-####
 
 #END POINT DETECTION ####
 #source("thinning.R")
@@ -203,7 +166,6 @@ pimage(is_thin)
 #pimage(mc4)
 #pimage(mc4>4)
 #sum(mc4>4)
-
 
 #spatialfil() easily generates different Gaussian kernel types ####
 cG <- convKernel(sigma = 1.5, k = "gaussian")   #Gaussian Filter
@@ -222,13 +184,10 @@ pimage(G)
 #C) Does Outlier Removal help?
 
 #THIN A SAMPLE OF THE DATASET ####
-#load("numbers.rda")
-#numbers_orig <- numbers
-#numbers[numbers != 0] <- 0
-#numbers <- numbers[1:5000,]
-#gfeatures_orig <- gfeatures
-#gfeatures[gfeatures != 0] <- 0
-#gfeatures <- gfeatures[1:5000,]
+load("numbers.rda")
+numbers_orig <- numbers
+numbers[numbers != 0] <- 0
+numbers <- numbers[1:5000,]
 x <- 0
 xt <- 0
 tv <- 0
@@ -244,15 +203,15 @@ for (i in 1:5000){
 #CONVOLVE THE DATA SET FOR HORIZONTAL AND VERTICAL LINE PATTERNS ####
 #Initialize Variables
 x <- 0
-obj = matrix(nrow = 42000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
+obj = matrix(nrow = 5000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
 #Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
-for(i in 1:42000){
+for(i in 1:5000){
 x <- toMatrix(numbers[i,])
 x_25 <- x>=quantile(x[x>0], 1-0) #Keep only X% darkest ##1-0.25 ##1-0
 xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines 
 xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines 
-xhq <- (xh>quantile(xh, .97)) # use (1-x)% of the highest values ##.97 ##.01
-xvq <- (xv>quantile(xv, .97)) # use (1-x)% of the highest values ##.97 ##.01
+xhq <- (xh>quantile(xh, .01)) # use (1-x)% of the highest values ##.97 ##.01
+xvq <- (xv>quantile(xv, .01)) # use (1-x)% of the highest values ##.97 ##.01
 obj[i,1] <- sum(toVector(xhq))
 obj[i,2] <- sum(toVector(xvq))
 }
@@ -267,13 +226,13 @@ colnames(obj) <- c("pixelSUM_Horiz","pixelSUM_Vert")
 #CONVOLVE THE DATA SET FOR SOBEL FILTER from spatialfil() AND CENTROID (x,y) ####
 #Initialize Variables
 z <- 0
-obj2 = matrix(nrow = 42000, ncol = 3, byrow = TRUE) #create empty matrix to dump results into
+obj2 = matrix(nrow = 5000, ncol = 3, byrow = TRUE) #create empty matrix to dump results into
 #Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
-for(i in 1:42000){
+for(i in 1:5000){
   z <- toMatrix(numbers[i,])
-  z_25 <- z>=quantile(z[z>0], 1-.25) #Keep only 25% darkest ##1-.25 ##1-0
+  z_25 <- z>=quantile(z[z>0], 1-.01) #Keep only 25% darkest ##1-.25 ##1-0
   zS <- convolve_2d(z, S) #this attempts to convolve with Sobel
-  zSq <- (zS>quantile(zS, .97)) # use (1-x)% of the highest values ##.97 #.01
+  zSq <- (zS>quantile(zS, .01)) # use (1-x)% of the highest values ##.97 #.01
   cI <- calcCentroid(z)
   obj2[i,1] <- sum(toVector(zSq))
   obj2[i,2] <- cI[1]
@@ -286,6 +245,42 @@ colnames(obj2) <- c("pixelSUM_Sobel","pixelAVG_CentX", "pixelAVG_CentY")
 #pimage(zG) 
 #pimage(zGq)
 
+
+#DATA OPERATIONS dplyr ####
+#Reference
+#http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
+
+gnumbers <- numbers %>% tbl_df
+gnumbers %>% glimpse
+
+gnumbers <- gnumbers %>% mutate(pixelSUM_ALL = rowSums(gnumbers))
+#NOTE: If pixel columns have been rearranged prior to doing this IT may NOT work!
+gnumbers$pixelSUM_H1 <- select(gnumbers, pixel0:pixel391) %>% rowSums
+gnumbers$pixelSUM_H2 <- select(gnumbers, pixel392:pixel783) %>% rowSums
+gnumbers$pixelSUM_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowSums
+gnumbers$pixelSUM_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowSums
+gnumbers$pixelSUM_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowSums
+gnumbers$pixelSUM_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowSums
+#Get Ratios
+gnumbers <- gnumbers %>% mutate(pixelPCT_H1 = (pixelSUM_H1/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_H2 = (pixelSUM_H2/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q1 = (pixelSUM_Q1/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q2 = (pixelSUM_Q2/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q3 = (pixelSUM_Q3/pixelSUM_ALL))
+gnumbers <- gnumbers %>% mutate(pixelPCT_Q4 = (pixelSUM_Q4/pixelSUM_ALL))
+#Get Averages
+gnumbers <- gnumbers %>% mutate(pixelAVG_ALL = rowMeans(gnumbers))
+gnumbers$pixelAVG_H1 <- select(gnumbers, pixel0:pixel391) %>% rowMeans
+gnumbers$pixelAVG_H2 <- select(gnumbers, pixel392:pixel783) %>% rowMeans
+gnumbers$pixelAVG_Q1 <- select(gnumbers, pixel0:pixel195) %>% rowMeans
+gnumbers$pixelAVG_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowMeans
+gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
+gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
+gnumbers %>% glimpse
+#save(gnumbers, file="gnumbers.rda")
+gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
+#save(gfeatures, file="gfeatures.rda")
+
 #UPDATE SELECTED FEATURES DATA FRAME ####
 gfeatures$pixelSUM_Horiz = obj[,"pixelSUM_Horiz"]
 gfeatures$pixelSUM_Vert = obj[,"pixelSUM_Vert"]
@@ -293,59 +288,72 @@ gfeatures$pixelSUM_Sobel = obj2[,"pixelSUM_Sobel"]
 gfeatures$pixelAVG_CentX = obj2[,"pixelAVG_CentX"]
 gfeatures$pixelAVG_CentY = obj2[,"pixelAVG_CentY"]
 
-#scaled_features_orig <- scaled_features
-scaled_features <- scale(gfeatures)
+gfeatures <- gfeatures %>% select(pixelAVG_ALL, 
+                                  pixelPCT_H1,
+                                  pixelPCT_Q1,
+                                  pixelPCT_Q2,
+                                  pixelPCT_Q3,
+                                  pixelPCT_Q4,
+                                  pixelSUM_Horiz,
+                                  pixelSUM_Vert,
+                                  pixelSUM_Sobel,
+                                  pixelAVG_CentX,
+                                  pixelAVG_CentY)
+
+scaled_features_orig <- scaled_features
+scaled_features <- gfeatures
+scaled_features$pixelAVG_ALL <- scale(scaled_features$pixelAVG_ALL)
+scaled_features$pixelSUM_Horiz <- scale(scaled_features$pixelSUM_Horiz)
+scaled_features$pixelSUM_Vert  <- scale(scaled_features$pixelSUM_Vert)
+scaled_features$pixelSUM_Sobel <- scale(scaled_features$pixelSUM_Sobel)
+scaled_features$pixelAVG_CentX <- scale(scaled_features$pixelAVG_CentX)
+scaled_features$pixelAVG_CentY <- scale(scaled_features$pixelAVG_CentY)
 #scaled_features <- gfeatures %>% scale
-save(gfeatures, file="gfeatures.rda")
+#save(gfeatures, file="gfeatures.rda")
 
 #CONFIRM CLUSTERING TENDENCY ####
 #Distance Matrix
-sample_cviz <- scaled_features[sample(1:nrow(scaled_features), 500),] # for Viz need smaller sample
+sample_cviz <- scaled_features[sample(1:nrow(scaled_features), 5000),] # for Viz need smaller sample
 sample_cviz_df <- as.data.frame(sample_cviz) #next plot needs DF
-plot(sample_cviz_df$pixelSUM_ALL)
+#plot(sample_cviz_df$pixelSUM_ALL)
 d_sample_cviz <- dist(sample_cviz)
-#VAT(dist_sample_scl)
-iVAT(d_sample_cviz)
+#VAT(d_sample_cviz)
+#iVAT(d_sample_cviz)
 
 #CLUSTERING WITH SAMPLES OF 5000 AND CHANGING # OF CENTERS FROM 10 TO 20 BY 2
 sample_kms <- scaled_features[sample(1:nrow(scaled_features), 5000),]
 d_sample_kms <- dist(sample_kms)
 kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
-kms15 <- kmeans(sample_kms, centers = 15, nstart = 5)
 kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
-kms25 <- kmeans(sample_kms, centers = 25, nstart = 5)
+kms30 <- kmeans(sample_kms, centers = 30, nstart = 5)
 
 str(kms10)
-str(kms15)
 str(kms20)
-str(kms25)
+str(kms30)
 
 kms10$size
-kms15$size
 kms20$size
-kms25$size
+kms30$size
 
 100*(kms10$betweenss / kms10$totss)
-100*(kms15$betweenss / kms18$totss)
 100*(kms20$betweenss / kms20$totss)
-100*(kms25$betweenss / kms25$totss)
+100*(kms30$betweenss / kms30$totss)
 
 100*(kms10$tot.withinss / kms10$totss)
-100*(kms15$tot.withinss / kms18$totss)
 100*(kms20$tot.withinss / kms20$totss)
-100*(kms25$tot.withinss / kms25$totss)
+100*(kms30$tot.withinss / kms30$totss)
 
 plot(hclust(dist(kms10$centers)))
-plot(hclust(dist(kms15$centers)))
 plot(hclust(dist(kms20$centers)))
+plot(hclust(dist(kms30$centers)))
 
 plot(hclust(as.dist(1-cor(t(kms10$centers)))))
-plot(hclust(as.dist(1-cor(t(kms15$centers)))))
 plot(hclust(as.dist(1-cor(t(kms20$centers)))))
+plot(hclust(as.dist(1-cor(t(kms30$centers)))))
 
 fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE) 
-fpc::cluster.stats(d_sample_kms, kms15$cluster, aggregateonly = TRUE) 
 fpc::cluster.stats(d_sample_kms, kms20$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms30$cluster, aggregateonly = TRUE) 
 
 
 
@@ -385,6 +393,8 @@ plot(ks, ASW, type="l")
 #ks[which.max(ASW)] #10
 abline(v=c(10, 15, 20, 25), col="red", lty=2)
 #
+
+
 
 
 #CLUSTERING ON THE RAW DATA - REFERENCE CODE FROM CLASS ####
