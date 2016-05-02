@@ -1,6 +1,6 @@
 #A large part of this Code is taken from Michael Hahsler (michael.hahsler.net)
 
-#LIBRARIES
+#LIBRARIES ####
 library(plyr)
 library(dplyr)
 library(Rcpp)
@@ -17,7 +17,7 @@ library(spatialfil)
 
 
 
-#LOAD/SAVE DATA
+#LOAD/SAVE DATA ####
 #gnumbers <- read.csv("gnumbers.csv", header=TRUE)
 #num_labels <- read.csv("numbers_labels.csv", header=TRUE)
 #save(numbers, file="numbers.rda")
@@ -27,7 +27,7 @@ load("numbers.rda")
 #write.csv(gfeatures, file = "gfeatures.csv", row.names = FALSE)
 
 
-
+#FUNCTIONS ####
 #CREATE CLUSTERING ENTROPY AND PURITY FUNCTIONS 
 entropy <- function(cluster, truth) {
   k <- max(cluster, truth)
@@ -178,75 +178,59 @@ cK <- convKernel(sigma = 1.5, k = "LoG")        #Laplacian of Gaussian Filter
 K <- cK$matrix
 pimage(G)
 
-#REINITIALIZE KEY DATASETS AS NEEDED TO REUSE CODE INSTEAD OF ADDING BLOCKS ####
+#REINITIALIZE KEY DATASETS AS NEEDED TO REUSE CODE INSTEAD OF ADDING BLOCKS
+#SENSITIVITY ANALYSIS ####
 #A) Does Thinning help?
 #B) Does PCA help?
 #C) Does Outlier Removal help?
 
-#THIN A SAMPLE OF THE DATASET ####
+#THINNING DATASET LOOP ####
+#load("numbers.rda")
+#numbers_orig <- numbers
+#numbers[numbers != 0] <- 0
+#numbers <- numbers[1:5000,]
+#x <- 0
+#xt <- 0
+#tv <- 0
+#sample_orig_nbrs <- numbers_orig[sample(1:nrow(numbers_orig), 5000),]
+#rm(numbers_orig)
+#for (i in 1:5000){
+#  x <- toMatrix(sample_orig_nbrs[i,])
+#  xt <- thinImage(x>128)
+#  tv <- toVector(xt)
+#  numbers[i,] <- tv
+#}
+
+#PRINCIPAL COMPONENTS ANALYSIS ####
+numbers <- sample_orig_nbrs
+# Run all the subsequent code to get the k-Means analysis then run PCA on the gfeatures DF
+pc_nbrs <- prcomp(features) #prcomp(numbers)
+plot(pc_nbrs)
+str(pc_nbrs)
+plot(pc_nbrs$x[,1:2])
+data_subspace <- pc_nbrs$x[,1:6] #use the first 6 PC
+kc <- 16
+kms_pc <- kmeans(data_subspace, centers = kc) #on this particular sample k = 16 looked promising
+plot(data_subspace, col = kms_pc$cluster)
+
+for(i in 1:kc)
+  pimage(toMatrix(colMeans(numbers[kms_pc$cluster == i,])))
+# There was no appreciative difference in running PCA against raw numbers or feature matrix
+
+#OUTLIER REMOVAL ####
 load("numbers.rda")
-numbers_orig <- numbers
+sample_orig_nbrs <- numbers[sample(1:nrow(numbers), 5500),]
+lof_nbrs <- lof(sample_orig_nbrs)
+sample_orig_nbrs$LOF <- lof_nbrs
+tbl_df(sample_orig_nbrs)
+sample_orig_nbrs <- sample_orig_nbrs %>% arrange(LOF)
+sample_orig_nbrs <- slice(sample_orig_nbrs, 1:5000)
+sample_orig_nbrs$LOF <- NULL
 numbers[numbers != 0] <- 0
 numbers <- numbers[1:5000,]
-x <- 0
-xt <- 0
-tv <- 0
-sample_orig_nbrs <- numbers_orig[sample(1:nrow(numbers_orig), 5000),]
-rm(numbers_orig)
-for (i in 1:5000){
-  x <- toMatrix(sample_orig_nbrs[i,])
-  xt <- thinImage(x>128)
-  tv <- toVector(xt)
-  numbers[i,] <- tv
-}
+numbers <- sample_orig_nbrs
 
-#CONVOLVE THE DATA SET FOR HORIZONTAL AND VERTICAL LINE PATTERNS ####
-#Initialize Variables
-x <- 0
-obj = matrix(nrow = 5000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
-#Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
-for(i in 1:5000){
-x <- toMatrix(numbers[i,])
-x_25 <- x>=quantile(x[x>0], 1-0) #Keep only X% darkest ##1-0.25 ##1-0
-xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines 
-xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines 
-xhq <- (xh>quantile(xh, .01)) # use (1-x)% of the highest values ##.97 ##.01
-xvq <- (xv>quantile(xv, .01)) # use (1-x)% of the highest values ##.97 ##.01
-obj[i,1] <- sum(toVector(xhq))
-obj[i,2] <- sum(toVector(xvq))
-}
-colnames(obj) <- c("pixelSUM_Horiz","pixelSUM_Vert")
-
-#pimage(x)
-#pimage(x_25)
-#pimage(xhq) 
-#pimage(xvq) 
-
-
-#CONVOLVE THE DATA SET FOR SOBEL FILTER from spatialfil() AND CENTROID (x,y) ####
-#Initialize Variables
-z <- 0
-obj2 = matrix(nrow = 5000, ncol = 3, byrow = TRUE) #create empty matrix to dump results into
-#Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
-for(i in 1:5000){
-  z <- toMatrix(numbers[i,])
-  z_25 <- z>=quantile(z[z>0], 1-.01) #Keep only 25% darkest ##1-.25 ##1-0
-  zS <- convolve_2d(z, S) #this attempts to convolve with Sobel
-  zSq <- (zS>quantile(zS, .01)) # use (1-x)% of the highest values ##.97 #.01
-  cI <- calcCentroid(z)
-  obj2[i,1] <- sum(toVector(zSq))
-  obj2[i,2] <- cI[1]
-  obj2[i,3] <- cI[2]
-}
-colnames(obj2) <- c("pixelSUM_Sobel","pixelAVG_CentX", "pixelAVG_CentY")
-
-#pimage(z)
-#pimage(z_25)
-#pimage(zG) 
-#pimage(zGq)
-
-
-#DATA OPERATIONS dplyr ####
+#INITIAL DATA OPERATIONS with dplyr() ####
 #Reference
 #http://stat545.com/block010_dplyr-end-single-table.html for more dplyr single DS operations
 
@@ -281,7 +265,51 @@ gnumbers %>% glimpse
 gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
 #save(gfeatures, file="gfeatures.rda")
 
-#UPDATE SELECTED FEATURES DATA FRAME ####
+#CONVOLVE THE DATA SET FOR HORIZONTAL AND VERTICAL LINE PATTERNS ####
+#Initialize Variables
+x <- 0
+obj = matrix(nrow = 5000, ncol = 2, byrow = TRUE) #create empty matrix to dump results into
+#Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
+for(i in 1:5000){
+x <- toMatrix(numbers[i,])
+x_25 <- x>=quantile(x[x>0], 1-0) #Keep only X% darkest ##1-0.25 ##1-0
+xh <- convolve_2d(x_25, conv_vc) #this attempts to find vertical lines 
+xv <- convolve_2d(x_25, conv_hc) #this attempts to find horizontal lines 
+xhq <- (xh>quantile(xh, .01)) # use (1-x)% of the highest values ##.97 ##.01
+xvq <- (xv>quantile(xv, .01)) # use (1-x)% of the highest values ##.97 ##.01
+obj[i,1] <- sum(toVector(xhq))
+obj[i,2] <- sum(toVector(xvq))
+}
+colnames(obj) <- c("pixelSUM_Horiz","pixelSUM_Vert")
+
+#pimage(x)
+#pimage(x_25)
+#pimage(xhq) 
+#pimage(xvq) 
+
+#CONVOLVE THE DATA SET FOR SOBEL FILTER from spatialfil() AND CENTROID (x,y) ####
+#Initialize Variables
+z <- 0
+obj2 = matrix(nrow = 5000, ncol = 3, byrow = TRUE) #create empty matrix to dump results into
+#Execute For Loop ##a) 42000 (original images) ##b) 5000 (thinned images)
+for(i in 1:5000){
+  z <- toMatrix(numbers[i,])
+  z_25 <- z>=quantile(z[z>0], 1-.01) #Keep only 25% darkest ##1-.25 ##1-0
+  zS <- convolve_2d(z, S) #this attempts to convolve with Sobel
+  zSq <- (zS>quantile(zS, .01)) # use (1-x)% of the highest values ##.97 #.01
+  cI <- calcCentroid(z)
+  obj2[i,1] <- sum(toVector(zSq))
+  obj2[i,2] <- cI[1]
+  obj2[i,3] <- cI[2]
+}
+colnames(obj2) <- c("pixelSUM_Sobel","pixelAVG_CentX", "pixelAVG_CentY")
+
+#pimage(z)
+#pimage(z_25)
+#pimage(zG) 
+#pimage(zGq)
+
+#UPDATE SELECTED FEATURES DATA FRAME WITH CONVOLUTION NUMBERS ####
 gfeatures$pixelSUM_Horiz = obj[,"pixelSUM_Horiz"]
 gfeatures$pixelSUM_Vert = obj[,"pixelSUM_Vert"]
 gfeatures$pixelSUM_Sobel = obj2[,"pixelSUM_Sobel"]
@@ -300,7 +328,8 @@ gfeatures <- gfeatures %>% select(pixelAVG_ALL,
                                   pixelAVG_CentX,
                                   pixelAVG_CentY)
 
-scaled_features_orig <- scaled_features
+#SCALE SOME SELECTED FEATURES ####
+#scaled_features_orig <- scaled_features
 scaled_features <- gfeatures
 scaled_features$pixelAVG_ALL <- scale(scaled_features$pixelAVG_ALL)
 scaled_features$pixelSUM_Horiz <- scale(scaled_features$pixelSUM_Horiz)
@@ -313,16 +342,16 @@ scaled_features$pixelAVG_CentY <- scale(scaled_features$pixelAVG_CentY)
 
 #CONFIRM CLUSTERING TENDENCY ####
 #Distance Matrix
-sample_cviz <- scaled_features[sample(1:nrow(scaled_features), 5000),] # for Viz need smaller sample
-sample_cviz_df <- as.data.frame(sample_cviz) #next plot needs DF
+#sample_cviz <- scaled_features[sample(1:nrow(scaled_features), 5000),] # for Viz need smaller sample
+#sample_cviz_df <- as.data.frame(sample_cviz) #next plot needs DF
 #plot(sample_cviz_df$pixelSUM_ALL)
-d_sample_cviz <- dist(sample_cviz)
+d_sample_cviz <- dist(scaled_features)    #For PCA round didn't need to resample already 5000 from Thin
 #VAT(d_sample_cviz)
 #iVAT(d_sample_cviz)
 
-#CLUSTERING WITH SAMPLES OF 5000 AND CHANGING # OF CENTERS FROM 10 TO 20 BY 2
-sample_kms <- scaled_features[sample(1:nrow(scaled_features), 5000),]
-d_sample_kms <- dist(sample_kms)
+#CLUSTERING WITH SAMPLES OF 5000 AND DIFFERENT # OF CENTERS ####
+sample_kms <- scaled_features #[sample(1:nrow(scaled_features), 5000),]
+d_sample_kms <- dist(scaled_features)      #For PCA round didn't need to resample already 5000 from Thin
 kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
 kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
 kms30 <- kmeans(sample_kms, centers = 30, nstart = 5)
@@ -355,9 +384,7 @@ fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE)
 fpc::cluster.stats(d_sample_kms, kms20$cluster, aggregateonly = TRUE) 
 fpc::cluster.stats(d_sample_kms, kms30$cluster, aggregateonly = TRUE) 
 
-
-
-#CLUSTER OPTIMIZATION
+#CLUSTER OPTIMIZATION ####
 #Total Within Sum of Squares (WSS) - Cohesion
 ks <- seq(from = 10, to = 30, by = 2)
 WSS <- sapply(ks, FUN=function(k) {
@@ -368,7 +395,7 @@ abline(v=c(10, 15, 20, 25), col="red", lty=2)
 
 ks2 <- seq(from = 10, to = 40, by = 2)
 WSS2 <- sapply(ks2, FUN=function(k) {
-  kmeans(scaled_features[sample(1:nrow(scaled_features), 5000),], 
+  kmeans(scaled_features, #[sample(1:nrow(scaled_features), 5000),], 
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks2, WSS2, type="l")
@@ -376,7 +403,7 @@ abline(v=c(10, 15, 20, 25), col="red", lty=2)
 
 ks3 <- seq(from = 10, to = 50, by = 5)
 WSS3 <- sapply(ks3, FUN=function(k) {
-  kmeans(scaled_features[sample(1:nrow(scaled_features), 5000),], 
+  kmeans(scaled_features, #[sample(1:nrow(scaled_features), 5000),], 
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks3, WSS3, type="l")
@@ -384,17 +411,15 @@ abline(v=c(10, 15, 20, 25), col="red", lty=2)
 
 #Average Silhouette Width (ASW) - Cohesion and Separation
 ASW <- sapply(ks, FUN=function(k) {
-  fpc::cluster.stats(d_sample_cviz, kmeans(sample_cviz,
-                                           centers=k,
-                                           nstart=5)$cluster)$avg.silwidth
+  fpc::cluster.stats(d_sample_kms, kmeans(sample_kms,
+                                          centers=k,
+                                          nstart=5)$cluster)$avg.silwidth
 })
 
 plot(ks, ASW, type="l")
 #ks[which.max(ASW)] #10
 abline(v=c(10, 15, 20, 25), col="red", lty=2)
 #
-
-
 
 
 #CLUSTERING ON THE RAW DATA - REFERENCE CODE FROM CLASS ####
