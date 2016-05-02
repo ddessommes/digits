@@ -464,7 +464,7 @@ val <- rbind(
   purity = purity(kms30$cluster, truth)
   ),
   random10 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, random10, truth, compareonly = TRUE)),
+  unlist(fpc::cluster.stats(d_sample_kms, random10, truth, compareonly = TRUE)), #recursive = FALSE),
   entropy = entropy(random10, truth),
   purity = purity(random10, truth)
   ),
