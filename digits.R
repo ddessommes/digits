@@ -22,7 +22,7 @@ library(spatialfil)
 #num_labels <- read.csv("numbers_labels.csv", header=TRUE)
 #save(numbers, file="numbers.rda")
 #save(num_labels, file="num_labels.rda")
-load("numbers.rda")
+#load("numbers.rda")
 #write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
 #write.csv(gfeatures, file = "gfeatures.csv", row.names = FALSE)
 
@@ -434,7 +434,9 @@ plot(as.dendrogram(hcl), leaflab = "none")
 #DBSCAN ####
 sample_db <- scaled_features[sample(1:nrow(scaled_features), 1000),]
 kNNdistplot(sample_db, k = 3)
-abline(h=.25, col="red")
+abline(h=2, col="red")
+(db <- dbscan(sample_db, eps=2, minPts=10))
+
 
 #CLUSTERING ON THE RAW DATA - REFERENCE CODE FROM CLASS ####
 #View the Centroid Images
