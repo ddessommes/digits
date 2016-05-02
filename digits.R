@@ -217,18 +217,20 @@ for(i in 1:kc)
   pimage(toMatrix(colMeans(numbers[kms_pc$cluster == i,])))
 # There was no appreciative difference in running PCA against raw numbers or feature matrix
 
-#OUTLIER REMOVAL ####
+#SAMPLING WITH OUTLIER REMOVAL AND LABEL STORAGE ####
 load("numbers.rda")
+numbers$X <- as.vector(seq(1:nrow(numbers)), mode = "integer")
 sample_orig_nbrs <- numbers[sample(1:nrow(numbers), 5500),]
 lof_nbrs <- lof(sample_orig_nbrs)
 sample_orig_nbrs$LOF <- lof_nbrs
 tbl_df(sample_orig_nbrs)
 sample_orig_nbrs <- sample_orig_nbrs %>% arrange(LOF)
 sample_orig_nbrs <- slice(sample_orig_nbrs, 1:5000)
-sample_orig_nbrs$LOF <- NULL
 numbers[numbers != 0] <- 0
 numbers <- numbers[1:5000,]
 numbers <- sample_orig_nbrs
+numbers$X   <- NULL
+numbers$LOF <- NULL
 
 #INITIAL DATA OPERATIONS with dplyr() ####
 #Reference
@@ -353,6 +355,7 @@ d_sample_cviz <- dist(scaled_features)    #For PCA round didn't need to resample
 sample_kms <- scaled_features #[sample(1:nrow(scaled_features), 5000),]
 d_sample_kms <- dist(scaled_features)      #For PCA round didn't need to resample already 5000 from Thin
 kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
+kms15 <- kmeans(sample_kms, centers = 15, nstart = 5)
 kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
 kms30 <- kmeans(sample_kms, centers = 30, nstart = 5)
 
@@ -435,7 +438,48 @@ plot(as.dendrogram(hcl), leaflab = "none")
 sample_db <- scaled_features[sample(1:nrow(scaled_features), 1000),]
 kNNdistplot(sample_db, k = 3)
 abline(h=2, col="red")
-(db <- dbscan(sample_db, eps=2, minPts=10))
+(db <- dbscan(sample_db, eps=0.5, minPts=3))
+
+#EXTERNAL CLUSTER VALIDATION ####
+truth <- dplyr::inner_join(num_labels, sample_orig_nbrs, by = "X")
+truth <- truth %>% select(label)
+random10 <- sample(1:10, nrow(scaled_features), replace = TRUE)
+random20 <- sample(1:20, nrow(scaled_features), replace = TRUE)
+random30 <- sample(1:30, nrow(scaled_features), replace = TRUE)
+
+val <- rbind(
+  kms10 = c(
+  unlist(fpc::cluster.stats(d_sample_kms, kms10$cluster, truth, compareonly = TRUE)),
+  entropy = entropy(kms10$cluster, truth),
+  purity = purity(kms10$cluster, truth)
+  ),
+  kms20 = c(
+  unlist(fpc::cluster.stats(d_sample_kms, kms20$cluster, truth, compareonly = TRUE)),
+  entropy = entropy(kms20$cluster, truth),
+  purity = purity(kms20$cluster, truth)
+  ),
+  kms30 = c(
+  unlist(fpc::cluster.stats(d_sample_kms, kms30$cluster, truth, compareonly = TRUE)),
+  entropy = entropy(kms30$cluster, truth),
+  purity = purity(kms30$cluster, truth)
+  ),
+  random10 = c(
+  unlist(fpc::cluster.stats(d_sample_kms, random10, truth, compareonly = TRUE)),
+  entropy = entropy(random10, truth),
+  purity = purity(random10, truth)
+  ),
+  random20 = c(
+  unlist(fpc::cluster.stats(d_sample_kms, random20, truth, compareonly = TRUE)),
+  entropy = entropy(random20, truth),
+  purity = purity(random20, truth)
+  ),
+  random30 = c(
+  unlist(fpc::cluster.stats(d_sample_kms, random30, truth, compareonly = TRUE)),
+  entropy = entropy(random30, truth),
+  purity = purity(random30, truth)
+  )
+)
+val
 
 
 #CLUSTERING ON THE RAW DATA - REFERENCE CODE FROM CLASS ####
