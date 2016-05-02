@@ -442,39 +442,39 @@ abline(h=2, col="red")
 
 #EXTERNAL CLUSTER VALIDATION ####
 truth <- dplyr::inner_join(num_labels, sample_orig_nbrs, by = "X")
-truth <- truth %>% select(label)
+truth <- truth %>% select(label) %>% unlist
 random10 <- sample(1:10, nrow(scaled_features), replace = TRUE)
 random20 <- sample(1:20, nrow(scaled_features), replace = TRUE)
 random30 <- sample(1:30, nrow(scaled_features), replace = TRUE)
 
 val <- rbind(
   kms10 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, kms10$cluster, truth, compareonly = TRUE)),
+  (fpc::cluster.stats(d_sample_kms, kms10$cluster, truth, compareonly = TRUE)),
   entropy = entropy(kms10$cluster, truth),
   purity = purity(kms10$cluster, truth)
   ),
   kms20 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, kms20$cluster, truth, compareonly = TRUE)),
+  (fpc::cluster.stats(d_sample_kms, kms20$cluster, truth, compareonly = TRUE)),
   entropy = entropy(kms20$cluster, truth),
   purity = purity(kms20$cluster, truth)
   ),
   kms30 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, kms30$cluster, truth, compareonly = TRUE)),
+  (fpc::cluster.stats(d_sample_kms, kms30$cluster, truth, compareonly = TRUE)),
   entropy = entropy(kms30$cluster, truth),
   purity = purity(kms30$cluster, truth)
   ),
   random10 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, random10, truth, compareonly = TRUE)), #recursive = FALSE),
+  (fpc::cluster.stats(d_sample_kms, random10, truth, compareonly = TRUE)), #recursive = FALSE),
   entropy = entropy(random10, truth),
   purity = purity(random10, truth)
   ),
   random20 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, random20, truth, compareonly = TRUE)),
+  (fpc::cluster.stats(d_sample_kms, random20, truth, compareonly = TRUE)),
   entropy = entropy(random20, truth),
   purity = purity(random20, truth)
   ),
   random30 = c(
-  unlist(fpc::cluster.stats(d_sample_kms, random30, truth, compareonly = TRUE)),
+  (fpc::cluster.stats(d_sample_kms, random30, truth, compareonly = TRUE)),
   entropy = entropy(random30, truth),
   purity = purity(random30, truth)
   )
