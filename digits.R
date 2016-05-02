@@ -22,9 +22,7 @@ library(spatialfil)
 #num_labels <- read.csv("numbers_labels.csv", header=TRUE)
 #save(numbers, file="numbers.rda")
 #save(num_labels, file="num_labels.rda")
-#save(gnumbers, file="gnumbers.rda")
-#save(gfeatures, file="gfeatures.rda")
-load("gnumbers.rda")
+load("numbers.rda")
 #write.csv(gnumbers, file = "gnumbers.csv", row.names = FALSE)
 #write.csv(gfeatures, file = "gfeatures.csv", row.names = FALSE)
 
@@ -121,9 +119,9 @@ gnumbers$pixelAVG_Q2 <- select(gnumbers, pixel196:pixel391) %>% rowMeans
 gnumbers$pixelAVG_Q3 <- select(gnumbers, pixel392:pixel587) %>% rowMeans
 gnumbers$pixelAVG_Q4 <- select(gnumbers, pixel588:pixel783) %>% rowMeans
 gnumbers %>% glimpse
-
+save(gnumbers, file="gnumbers.rda")
 gfeatures <- select(gnumbers, pixelSUM_ALL:pixelAVG_Q4)
-
+save(gfeatures, file="gfeatures.rda")
 
 #VISUALIZE SAMPLE DATA
 pimage(toMatrix(numbers[2,]))
@@ -289,17 +287,16 @@ colnames(obj2) <- c("pixelSUM_Sobel","pixelAVG_CentX", "pixelAVG_CentY")
 #pimage(zGq)
 
 #UPDATE SELECTED FEATURES DATA FRAME ####
-mutate(gfeatures, 
-       pixelSUM_Horiz = obj[,"pixelSUM_Horiz"],
-       pixelSUM_Vert = obj[,"pixelSUM_Vert"],
-       pixelSUM_Sobel = obj2[,"pixelSUM_Sobel"],
-       pixelAVG_CentX = obj2[,"pixelAVG_CentX"],
-       pixelAVG_CentY = obj2[,"pixelAVG_CentY"])
+gfeatures$pixelSUM_Horiz = obj[,"pixelSUM_Horiz"]
+gfeatures$pixelSUM_Vert = obj[,"pixelSUM_Vert"]
+gfeatures$pixelSUM_Sobel = obj2[,"pixelSUM_Sobel"]
+gfeatures$pixelAVG_CentX = obj2[,"pixelAVG_CentX"]
+gfeatures$pixelAVG_CentY = obj2[,"pixelAVG_CentY"]
 
 #scaled_features_orig <- scaled_features
 scaled_features <- scale(gfeatures)
 #scaled_features <- gfeatures %>% scale
-
+save(gfeatures, file="gfeatures.rda")
 
 #CONFIRM CLUSTERING TENDENCY ####
 #Distance Matrix
@@ -314,50 +311,40 @@ iVAT(d_sample_cviz)
 sample_kms <- scaled_features[sample(1:nrow(scaled_features), 5000),]
 d_sample_kms <- dist(sample_kms)
 kms10 <- kmeans(sample_kms, centers = 10, nstart = 5)
-kms13 <- kmeans(sample_kms, centers = 13, nstart = 5)
-kms18 <- kmeans(sample_kms, centers = 18, nstart = 5)
+kms15 <- kmeans(sample_kms, centers = 15, nstart = 5)
 kms20 <- kmeans(sample_kms, centers = 20, nstart = 5)
-kms22 <- kmeans(sample_kms, centers = 22, nstart = 5)
 kms25 <- kmeans(sample_kms, centers = 25, nstart = 5)
 
 str(kms10)
-str(kms13)
-str(kms18)
+str(kms15)
 str(kms20)
-str(kms22)
 str(kms25)
 
 kms10$size
-kms13$size
-kms18$size
+kms15$size
 kms20$size
-kms22$size
 kms25$size
 
 100*(kms10$betweenss / kms10$totss)
-100*(kms13$betweenss / kms13$totss)
-100*(kms18$betweenss / kms18$totss)
+100*(kms15$betweenss / kms18$totss)
 100*(kms20$betweenss / kms20$totss)
-100*(kms22$betweenss / kms22$totss)
 100*(kms25$betweenss / kms25$totss)
 
 100*(kms10$tot.withinss / kms10$totss)
-100*(kms13$tot.withinss / kms13$totss)
-100*(kms18$tot.withinss / kms18$totss)
+100*(kms15$tot.withinss / kms18$totss)
 100*(kms20$tot.withinss / kms20$totss)
-100*(kms22$tot.withinss / kms22$totss)
 100*(kms25$tot.withinss / kms25$totss)
 
 plot(hclust(dist(kms10$centers)))
-plot(hclust(dist(kms13$centers)))
+plot(hclust(dist(kms15$centers)))
 plot(hclust(dist(kms20$centers)))
 
 plot(hclust(as.dist(1-cor(t(kms10$centers)))))
-plot(hclust(as.dist(1-cor(t(kms13$centers)))))
+plot(hclust(as.dist(1-cor(t(kms15$centers)))))
 plot(hclust(as.dist(1-cor(t(kms20$centers)))))
 
 fpc::cluster.stats(d_sample_kms, kms10$cluster, aggregateonly = TRUE) 
-fpc::cluster.stats(d_sample_kms, kms13$cluster, aggregateonly = TRUE) 
+fpc::cluster.stats(d_sample_kms, kms15$cluster, aggregateonly = TRUE) 
 fpc::cluster.stats(d_sample_kms, kms20$cluster, aggregateonly = TRUE) 
 
 
@@ -369,7 +356,7 @@ WSS <- sapply(ks, FUN=function(k) {
   kmeans(scaled_features, centers=k, nstart=5)$tot.withinss
 })
 plot(ks, WSS, type="l")
-abline(v=c(10, 13, 20, 25), col="red", lty=2)
+abline(v=c(10, 15, 20, 25), col="red", lty=2)
 
 ks2 <- seq(from = 10, to = 40, by = 2)
 WSS2 <- sapply(ks2, FUN=function(k) {
@@ -377,7 +364,7 @@ WSS2 <- sapply(ks2, FUN=function(k) {
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks2, WSS2, type="l")
-abline(v=c(10, 13, 20, 25), col="red", lty=2)
+abline(v=c(10, 15, 20, 25), col="red", lty=2)
 
 ks3 <- seq(from = 10, to = 50, by = 5)
 WSS3 <- sapply(ks3, FUN=function(k) {
@@ -385,7 +372,7 @@ WSS3 <- sapply(ks3, FUN=function(k) {
          centers=k, nstart=5)$tot.withinss
 })
 plot(ks3, WSS3, type="l")
-abline(v=c(10, 13, 20, 25), col="red", lty=2)
+abline(v=c(10, 15, 20, 25), col="red", lty=2)
 
 #Average Silhouette Width (ASW) - Cohesion and Separation
 ASW <- sapply(ks, FUN=function(k) {
@@ -396,7 +383,7 @@ ASW <- sapply(ks, FUN=function(k) {
 
 plot(ks, ASW, type="l")
 #ks[which.max(ASW)] #10
-abline(v=c(10, 13, 20, 22, 25), col="red", lty=2)
+abline(v=c(10, 15, 20, 25), col="red", lty=2)
 #
 
 
