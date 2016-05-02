@@ -422,6 +422,20 @@ abline(v=c(10, 15, 20, 25), col="red", lty=2)
 #
 
 
+#HIERARCHICAL CLUSTERING ####
+sample_hc <- scaled_features #[sample(1:nrow(scaled_features), 5000),]
+d_sample_hc <- dist(sample_hc)
+hcl <- hclust(d_sample_hc, method="complete")
+plot(as.dendrogram(hcl), leaflab = "none")
+#rect.hclust(hcl, k=4)
+
+#https://rpubs.com/gaston/dendrograms
+
+#DBSCAN ####
+sample_db <- scaled_features[sample(1:nrow(scaled_features), 1000),]
+kNNdistplot(sample_db, k = 3)
+abline(h=.25, col="red")
+
 #CLUSTERING ON THE RAW DATA - REFERENCE CODE FROM CLASS ####
 #View the Centroid Images
 #pimage(toMatrix(kms$centers[1,]))
